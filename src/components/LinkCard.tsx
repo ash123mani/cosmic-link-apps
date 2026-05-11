@@ -1,20 +1,14 @@
 import { View, Text, StyleSheet, Pressable, Alert, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-
-interface Category {
-  name: string;
-  id: string;
-}
+import { Colors } from '@/constants/theme';
 
 interface LinkItem {
   id: string;
   linkUrl: string;
   title: string;
   description?: string;
-  category: Category;
   imageUrl?: string;
   siteName?: string;
-  userId: string;
 }
 
 interface Props {
@@ -65,54 +59,46 @@ export function LinkCard({ link, onDelete }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
     padding: 16,
     marginHorizontal: 16,
     marginVertical: 6,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  content: {
-    marginBottom: 12,
-  },
+  content: { marginBottom: 12 },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2A2438',
+    color: Colors.blackMedium,
     marginBottom: 4,
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    
+    color: Colors.gray,
     marginBottom: 4,
   },
   url: {
     fontSize: 12,
-    color: '#1001D4',
+    color: Colors.primary,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  actions: { flexDirection: 'row', gap: 8 },
   actionBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#F5F4F9',
+    borderRadius: 4,
+    backgroundColor: Colors.bodyBg,
   },
   actionText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#2A2438',
+    fontWeight: '600',
+    color: Colors.blackMedium,
   },
-  deleteBtn: {
-    backgroundColor: '#FEE',
-  },
-  deleteText: {
-    color: '#CF462D',
-  },
+  deleteBtn: { backgroundColor: '#FEE' },
+  deleteText: { color: Colors.error },
 });

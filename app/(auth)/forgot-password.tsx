@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { Colors } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
   const { forgotPassword } = useAuth();
@@ -55,10 +56,11 @@ export default function ForgotPasswordScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           autoCorrect={false}
+          placeholderTextColor={Colors.gray}
         />
 
         <Pressable style={styles.button} onPress={handleSubmit} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
+          {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
         </Pressable>
 
         <Pressable onPress={() => router.back()}>
@@ -70,29 +72,30 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F4F9' },
+  container: { flex: 1, backgroundColor: Colors.bodyBg },
   content: { flex: 1, justifyContent: 'center', padding: 32 },
-  title: { fontSize: 24, fontWeight: '700', color: '#2A2438', textAlign: 'center', marginBottom: 12 },
-  message: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 32, lineHeight: 22 },
+  title: { fontSize: 24, fontWeight: '700', color: Colors.blackMedium, textAlign: 'center', marginBottom: 12 },
+  message: { fontSize: 15,  color: Colors.gray, textAlign: 'center', marginBottom: 32, lineHeight: 22 },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
     padding: 16,
     fontSize: 15,
+    
     marginBottom: 16,
-    color: '#2A2438',
-    shadowColor: '#000',
+    color: Colors.blackMedium,
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   button: {
-    backgroundColor: '#1001D4',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
     padding: 16,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  link: { color: '#1001D4', fontWeight: '600', textAlign: 'center', marginTop: 20, fontSize: 14 },
+  buttonText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
+  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: 20, fontSize: 14 },
 });

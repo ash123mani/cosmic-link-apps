@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { Colors } from '@/constants/theme';
 
 export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -57,6 +58,7 @@ export default function ResetPasswordScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          placeholderTextColor={Colors.gray}
         />
         <TextInput
           style={styles.input}
@@ -64,10 +66,11 @@ export default function ResetPasswordScreen() {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
+          placeholderTextColor={Colors.gray}
         />
 
         <Pressable style={styles.button} onPress={handleSubmit} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Reset Password</Text>}
+          {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Reset Password</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -75,29 +78,30 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F4F9' },
+  container: { flex: 1, backgroundColor: Colors.bodyBg },
   content: { flex: 1, justifyContent: 'center', padding: 32 },
-  title: { fontSize: 24, fontWeight: '700', color: '#2A2438', textAlign: 'center', marginBottom: 12 },
-  message: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 32, lineHeight: 22 },
+  title: { fontSize: 24, fontWeight: '700', color: Colors.blackMedium, textAlign: 'center', marginBottom: 12 },
+  message: { fontSize: 15,  color: Colors.gray, textAlign: 'center', marginBottom: 32, lineHeight: 22 },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
     padding: 16,
     fontSize: 15,
+    
     marginBottom: 12,
-    color: '#2A2438',
-    shadowColor: '#000',
+    color: Colors.blackMedium,
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   button: {
-    backgroundColor: '#1001D4',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
 });

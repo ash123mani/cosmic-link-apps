@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Modal, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { Colors } from '@/constants/theme';
 import { LinkMetaPreview } from './LinkMetaPreview';
 
 interface Category {
@@ -41,22 +42,17 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
   const [fetchingMeta, setFetchingMeta] = useState(false);
 
   const handleFetchMeta = async () => {
-    console.log('[AddLinkModal] handleFetchMeta called, url:', url);
     if (!url.trim()) {
-      console.log('[AddLinkModal] url is empty, returning early');
       Alert.alert('Info', 'Please paste a URL first');
       return;
     }
     setFetchingMeta(true);
     try {
-      console.log('[AddLinkModal] calling onFetchMeta with:', url.trim());
       const result = await onFetchMeta(url.trim());
-      console.log('[AddLinkModal] onFetchMeta result:', result);
       setMeta(result);
       setTitle(result.title || '');
       setDescription(result.description || '');
-    } catch (err) {
-      console.log('[AddLinkModal] onFetchMeta error:', err);
+    } catch {
       Alert.alert('Error', 'Unable to fetch link metadata');
     } finally {
       setFetchingMeta(false);
@@ -95,7 +91,7 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <View style={styles.header}>
-            <Text style={styles.title}>Add Link</Text>
+            <Text style={styles.heading}>Add Link</Text>
             <Pressable onPress={onClose}><Text style={styles.close}>✕</Text></Pressable>
           </View>
 
@@ -106,10 +102,11 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
             onChangeText={setUrl}
             autoCapitalize="none"
             autoCorrect={false}
+            placeholderTextColor={Colors.gray}
           />
           <Pressable style={styles.fetchBtn} onPress={handleFetchMeta} disabled={fetchingMeta}>
             {fetchingMeta ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={styles.fetchBtnText}>Fetch Metadata</Text>
             )}
@@ -122,6 +119,7 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
             placeholder="Title"
             value={title}
             onChangeText={setTitle}
+            placeholderTextColor={Colors.gray}
           />
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -130,6 +128,7 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
             onChangeText={setDescription}
             multiline
             numberOfLines={3}
+            placeholderTextColor={Colors.gray}
           />
 
           <Text style={styles.label}>Category</Text>
@@ -149,7 +148,7 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
 
           <Pressable style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={styles.submitBtnText}>Save Link</Text>
             )}
@@ -167,9 +166,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modal: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
     padding: 24,
     maxHeight: '90%',
   },
@@ -179,24 +178,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: {
+  heading: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2A2438',
+    color: Colors.blackMedium,
   },
-  close: {
-    fontSize: 22,
-    color: '#666',
-    padding: 4,
-  },
+  close: { fontSize: 22, color: Colors.gray, padding: 4 },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    borderColor: Colors.blackLight,
+    borderRadius: 4,
     padding: 14,
     fontSize: 15,
+    
     marginBottom: 12,
-    color: '#2A2438',
+    color: Colors.blackMedium,
   },
   textArea: {
     minHeight: 80,
@@ -205,7 +201,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2A2438',
+    color: Colors.blackMedium,
     marginBottom: 8,
   },
   categoryRow: {
@@ -217,39 +213,36 @@ const styles = StyleSheet.create({
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F5F4F9',
+    borderRadius: 4,
+    backgroundColor: Colors.bodyBg,
   },
-  categoryChipActive: {
-    backgroundColor: '#1001D4',
-  },
+  categoryChipActive: { backgroundColor: Colors.primary },
   categoryChipText: {
     fontSize: 13,
-    color: '#2A2438',
+    fontWeight: '600',
+    color: Colors.blackMedium,
   },
-  categoryChipTextActive: {
-    color: '#fff',
-  },
+  categoryChipTextActive: { color: Colors.white },
   fetchBtn: {
-    backgroundColor: '#1001D4',
+    backgroundColor: Colors.primary,
     padding: 14,
-    borderRadius: 10,
+    borderRadius: 4,
     alignItems: 'center',
     marginBottom: 16,
   },
   fetchBtnText: {
-    color: '#fff',
+    color: Colors.white,
     fontWeight: '600',
     fontSize: 15,
   },
   submitBtn: {
-    backgroundColor: '#1001D4',
+    backgroundColor: Colors.primary,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 4,
     alignItems: 'center',
   },
   submitBtnText: {
-    color: '#fff',
+    color: Colors.white,
     fontWeight: '700',
     fontSize: 16,
   },

@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, Pressable, FlatList, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { Colors } from '@/constants/theme';
 
 export default function ProfileScreen() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -62,15 +63,15 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F4F9' },
+  container: { flex: 1, backgroundColor: Colors.bodyBg },
   header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#2A2438' },
+  title: { fontSize: 28, fontWeight: '700', color: Colors.blackMedium },
   section: { marginTop: 24, paddingHorizontal: 16 },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 8, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: Colors.gray, marginBottom: 8, textTransform: 'uppercase' },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    borderRadius: 4,
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -82,27 +83,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  divider: { height: 1, backgroundColor: '#F5F4F9', marginHorizontal: 16 },
-  label: { fontSize: 15, color: '#666' },
-  value: { fontSize: 15, fontWeight: '600', color: '#2A2438' },
+  divider: { height: 1, backgroundColor: Colors.bodyBg, marginHorizontal: 16 },
+  label: { fontSize: 15,  color: Colors.gray },
+  value: { fontSize: 15, fontWeight: '600', color: Colors.blackMedium },
   categoryRow: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
     padding: 16,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  categoryName: { fontSize: 15, fontWeight: '500', color: '#2A2438' },
+  categoryName: { fontSize: 15,  color: Colors.blackMedium },
   logoutBtn: {
     margin: 16,
-    backgroundColor: '#CF462D',
-    borderRadius: 12,
+    backgroundColor: Colors.error,
+    borderRadius: 4,
     padding: 16,
     alignItems: 'center',
   },
-  logoutText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  logoutText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
 });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { Colors } from '@/constants/theme';
 
 interface Props {
   visible: boolean;
@@ -39,17 +40,14 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
             value={name}
             onChangeText={setName}
             autoFocus
+            placeholderTextColor={Colors.gray}
           />
           <View style={styles.buttons}>
             <Pressable style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
             <Pressable style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitText}>Add</Text>
-              )}
+              {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.submitText}>Add</Text>}
             </Pressable>
           </View>
         </View>
@@ -66,50 +64,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modal: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
     padding: 24,
     width: '85%',
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2A2438',
+    color: Colors.blackMedium,
     marginBottom: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    borderColor: Colors.blackLight,
+    borderRadius: 4,
     padding: 14,
     fontSize: 15,
-    color: '#2A2438',
+    
+    color: Colors.blackMedium,
     marginBottom: 20,
   },
-  buttons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  buttons: { flexDirection: 'row', gap: 12 },
   cancelBtn: {
     flex: 1,
     padding: 14,
-    borderRadius: 10,
-    backgroundColor: '#F5F4F9',
+    borderRadius: 4,
+    backgroundColor: Colors.bodyBg,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#2A2438',
+    color: Colors.blackMedium,
     fontWeight: '600',
   },
   submitBtn: {
     flex: 1,
     padding: 14,
-    borderRadius: 10,
-    backgroundColor: '#1001D4',
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
   },
   submitText: {
-    color: '#fff',
+    color: Colors.white,
     fontWeight: '600',
   },
 });

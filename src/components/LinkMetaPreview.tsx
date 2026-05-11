@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { Colors } from '@/constants/theme';
 
 interface LinkMeta {
   siteName?: string;
@@ -31,30 +32,26 @@ export function LinkMetaPreview({ meta }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F5F4F9',
-    borderRadius: 12,
+    backgroundColor: Colors.bodyBg,
+    borderRadius: 4,
     overflow: 'hidden',
   },
-  image: {
-    width: '100%',
-    height: 160,
-  },
-  info: {
-    padding: 12,
-  },
+  image: { width: '100%', height: 160 },
+  info: { padding: 12 },
   title: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2A2438',
+    color: Colors.blackMedium,
     marginBottom: 4,
   },
   description: {
     fontSize: 13,
-    color: '#666',
+    
+    color: Colors.gray,
     marginBottom: 4,
   },
   siteName: {
     fontSize: 12,
-    color: '#1001D4',
+    color: Colors.primary,
   },
 });

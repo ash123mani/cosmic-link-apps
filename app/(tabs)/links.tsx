@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import { LinksProvider, useLinks } from '@/src/context/LinksContext';
 import { CategoryTabs } from '@/src/components/CategoryTabs';
 import { LinkCard } from '@/src/components/LinkCard';
 import { AddLinkModal } from '@/src/components/AddLinkModal';
 import { AddCategoryModal } from '@/src/components/AddCategoryModal';
+import { Colors } from '@/constants/theme';
 
 function LinksContent() {
   const { user, refreshUser } = useAuth();
-  const { links, loading, selectedCategory, setSelectedCategory, addLink, deleteLink, getLinkMeta, addCategory, deleteCategory } = useLinks();
+  const { links, loading, selectedCategory, setSelectedCategory, addLink, deleteLink, getLinkMeta, addCategory } = useLinks();
   const [addLinkVisible, setAddLinkVisible] = useState(false);
   const [addCatVisible, setAddCatVisible] = useState(false);
 
@@ -31,24 +31,6 @@ function LinksContent() {
   const handleAddCategory = async (name: string) => {
     await addCategory(name);
     await refreshUser();
-  };
-
-  const handleDeleteCategory = (catId: string) => {
-    Alert.alert('Delete Category', 'Are you sure? Links in this category won\'t be deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteCategory(catId);
-            await refreshUser();
-          } catch {
-            Alert.alert('Error', 'Failed to delete category');
-          }
-        },
-      },
-    ]);
   };
 
   return (
@@ -74,7 +56,7 @@ function LinksContent() {
       ) : null}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#1001D4" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
       ) : links.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>No links yet</Text>
@@ -116,7 +98,7 @@ export default function LinksScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F4F9' },
+  container: { flex: 1, backgroundColor: Colors.bodyBg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -125,16 +107,16 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#2A2438' },
+  title: { fontSize: 28, fontWeight: '700', color: Colors.blackMedium },
   headerActions: { flexDirection: 'row', gap: 8 },
   headerBtn: {
-    backgroundColor: '#1001D4',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 4,
   },
-  headerBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  headerBtnText: { color: Colors.white, fontWeight: '600', fontSize: 13 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#2A2438', marginBottom: 8 },
-  emptyText: { fontSize: 14, color: '#666', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.blackMedium, marginBottom: 8 },
+  emptyText: { fontSize: 14,  color: Colors.gray, textAlign: 'center' },
 });

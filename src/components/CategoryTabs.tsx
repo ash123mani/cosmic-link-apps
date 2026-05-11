@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { Colors } from '@/constants/theme';
 
 interface Category {
   name: string;
@@ -38,24 +39,20 @@ const styles = StyleSheet.create({
   tab: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: '#fff',
+    borderRadius: 4,
+    backgroundColor: Colors.white,
     marginRight: 8,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
-  tabActive: {
-    backgroundColor: '#1001D4',
-  },
+  tabActive: { backgroundColor: Colors.primary },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#2A2438',
+    fontWeight: '600',
+    color: Colors.blackMedium,
   },
-  tabTextActive: {
-    color: '#fff',
-  },
+  tabTextActive: { color: Colors.white },
 });
