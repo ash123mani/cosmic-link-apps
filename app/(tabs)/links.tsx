@@ -6,13 +6,21 @@ import { CategoryTabs } from '@/src/components/CategoryTabs';
 import { LinkCard } from '@/src/components/LinkCard';
 import { AddLinkModal } from '@/src/components/AddLinkModal';
 import { AddCategoryModal } from '@/src/components/AddCategoryModal';
-import { Colors } from '@/constants/theme';
+import { useShareIntent } from '@/src/hooks/useShareIntent';
+import { Colors, Spacing, FontSize } from '@/constants/theme';
 
 function LinksContent() {
   const { user, refreshUser } = useAuth();
   const { links, loading, selectedCategory, setSelectedCategory, addLink, deleteLink, getLinkMeta, addCategory } = useLinks();
+  const { sharedUrl, pending, clear: clearShare } = useShareIntent();
   const [addLinkVisible, setAddLinkVisible] = useState(false);
   const [addCatVisible, setAddCatVisible] = useState(false);
+
+  useEffect(() => {
+    if (pending && sharedUrl) {
+      setAddLinkVisible(true);
+    }
+  }, [pending, sharedUrl]);
 
   useEffect(() => {
     if (user?.categories?.length && !selectedCategory) {
@@ -31,6 +39,11 @@ function LinksContent() {
   const handleAddCategory = async (name: string) => {
     await addCategory(name);
     await refreshUser();
+  };
+
+  const handleCloseAddLink = () => {
+    setAddLinkVisible(false);
+    clearShare();
   };
 
   return (
@@ -73,11 +86,13 @@ function LinksContent() {
 
       <AddLinkModal
         visible={addLinkVisible}
-        onClose={() => setAddLinkVisible(false)}
+        onClose={handleCloseAddLink}
         categories={user?.categories || []}
         selectedCategory={selectedCategory}
         onSubmit={handleAddLink}
         onFetchMeta={getLinkMeta}
+        initialUrl={sharedUrl || undefined}
+        autoFetch
       />
 
       <AddCategoryModal
@@ -103,20 +118,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.blackMedium },
-  headerActions: { flexDirection: 'row', gap: 8 },
+  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.blackMedium },
+  headerActions: { flexDirection: 'row', gap: Spacing.sm },
   headerBtn: {
     backgroundColor: Colors.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 4,
+    paddingHorizontal: Spacing.sm + 6,
+    paddingVertical: Spacing.sm,
+    borderRadius: 8,
   },
-  headerBtnText: { color: Colors.white, fontWeight: '600', fontSize: 13 },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.blackMedium, marginBottom: 8 },
-  emptyText: { fontSize: 14,  color: Colors.gray, textAlign: 'center' },
+  headerBtnText: { color: Colors.white, fontWeight: '600', fontSize: FontSize.xs },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  emptyTitle: { fontSize: FontSize.lg, fontWeight: '600', color: Colors.blackMedium, marginBottom: Spacing.sm },
+  emptyText: { fontSize: FontSize.sm, color: Colors.gray, textAlign: 'center' },
 });

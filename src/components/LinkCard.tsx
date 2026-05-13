@@ -1,33 +1,33 @@
-import { View, Text, StyleSheet, Pressable, Alert, Share } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
-import { Colors } from '@/constants/theme';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Share, Alert } from 'react-native';
+import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
 
-interface LinkItem {
+interface Link {
   id: string;
   linkUrl: string;
   title: string;
   description?: string;
   imageUrl?: string;
   siteName?: string;
+  category?: { name: string };
 }
 
 interface Props {
-  link: LinkItem;
+  link: Link;
   onDelete: (id: string) => void;
 }
 
 export function LinkCard({ link, onDelete }: Props) {
-  const handleCopy = async () => {
-    await Clipboard.setStringAsync(link.linkUrl);
-    Alert.alert('Copied', 'Link copied to clipboard');
-  };
-
   const handleShare = async () => {
-    await Share.share({ url: link.linkUrl, message: link.linkUrl });
+    try {
+      await Share.share({ url: link.linkUrl, message: link.linkUrl });
+    } catch {
+      // user dismissed
+    }
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete Link', 'Are you sure?', [
+    Alert.alert('Delete Link', 'Are you sure you want to delete this link?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => onDelete(link.id) },
     ]);
@@ -35,22 +35,15 @@ export function LinkCard({ link, onDelete }: Props) {
 
   return (
     <View style={styles.card}>
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>{link.title}</Text>
-        {link.description ? (
-          <Text style={styles.description} numberOfLines={2}>{link.description}</Text>
-        ) : null}
-        <Text style={styles.url} numberOfLines={1}>{link.linkUrl}</Text>
-      </View>
+      <Text style={styles.title} numberOfLines={2}>{link.title}</Text>
+      <Text style={styles.url} numberOfLines={1}>{link.linkUrl}</Text>
+      {link.description ? <Text style={styles.description} numberOfLines={2}>{link.description}</Text> : null}
       <View style={styles.actions}>
-        <Pressable style={styles.actionBtn} onPress={handleCopy}>
-          <Text style={styles.actionText}>Copy</Text>
+        <Pressable style={styles.shareBtn} onPress={handleShare}>
+          <Text style={styles.shareText}>Share</Text>
         </Pressable>
-        <Pressable style={styles.actionBtn} onPress={handleShare}>
-          <Text style={styles.actionText}>Share</Text>
-        </Pressable>
-        <Pressable style={[styles.actionBtn, styles.deleteBtn]} onPress={handleDelete}>
-          <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+        <Pressable style={styles.deleteBtn} onPress={handleDelete}>
+          <Text style={styles.deleteText}>Delete</Text>
         </Pressable>
       </View>
     </View>
@@ -60,45 +53,50 @@ export function LinkCard({ link, onDelete }: Props) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    borderRadius: 4,
-    padding: 16,
-    marginHorizontal: 16,
+    marginHorizontal: Spacing.md,
     marginVertical: 6,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    ...Shadow.md,
   },
-  content: { marginBottom: 12 },
   title: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
     fontWeight: '600',
     color: Colors.blackMedium,
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    
-    color: Colors.gray,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   url: {
-    fontSize: 12,
+    fontSize: FontSize.sm,
     color: Colors.primary,
+    marginBottom: Spacing.xs,
   },
-  actions: { flexDirection: 'row', gap: 8 },
-  actionBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
+  description: {
+    fontSize: FontSize.sm,
+    color: Colors.gray,
+    lineHeight: 20,
+    marginBottom: Spacing.sm,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  shareBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
     backgroundColor: Colors.bodyBg,
   },
-  actionText: {
-    fontSize: 13,
+  shareText: {
+    fontSize: FontSize.sm,
     fontWeight: '600',
     color: Colors.blackMedium,
   },
-  deleteBtn: { backgroundColor: '#FEE' },
-  deleteText: { color: Colors.error },
+  deleteBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.deleteBg,
+  },
+  deleteText: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.error },
 });

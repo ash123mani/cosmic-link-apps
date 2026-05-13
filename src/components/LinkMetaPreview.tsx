@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, BorderRadius, FontSize } from '@/constants/theme';
 
 interface LinkMeta {
   siteName?: string;
@@ -33,20 +33,19 @@ export function LinkMetaPreview({ meta }: Props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.bodyBg,
-    borderRadius: 4,
+    borderRadius: BorderRadius.sm,
     overflow: 'hidden',
   },
   image: { width: '100%', height: 160 },
   info: { padding: 12 },
   title: {
-    fontSize: 15,
+    fontSize: FontSize.md,
     fontWeight: '600',
     color: Colors.blackMedium,
     marginBottom: 4,
   },
   description: {
-    fontSize: 13,
-    
+    fontSize: FontSize.xs,
     color: Colors.gray,
     marginBottom: 4,
   },

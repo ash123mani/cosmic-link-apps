@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing, FontSize } from '@/constants/theme';
 
 interface Props {
   visible: boolean;
@@ -13,8 +13,8 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!name.trim() || name.trim().length < 3) {
-      Alert.alert('Error', 'Category name must be at least 3 characters');
+    if (!name.trim()) {
+      Alert.alert('Info', 'Please enter a category name');
       return;
     }
     setLoading(true);
@@ -23,14 +23,14 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
       setName('');
       onClose();
     } catch {
-      Alert.alert('Error', 'Failed to add category');
+      Alert.alert('Error', 'Failed to create category');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent>
+    <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>Add Category</Text>
@@ -39,7 +39,6 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
             placeholder="Category name"
             value={name}
             onChangeText={setName}
-            autoFocus
             placeholderTextColor={Colors.gray}
           />
           <View style={styles.buttons}>
@@ -59,53 +58,56 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
-    alignItems: 'center',
+    padding: Spacing.xl,
   },
   modal: {
     backgroundColor: Colors.white,
-    borderRadius: 4,
-    padding: 24,
-    width: '85%',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
   },
   title: {
-    fontSize: 18,
+    fontSize: FontSize.xl,
     fontWeight: '700',
     color: Colors.blackMedium,
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   input: {
     borderWidth: 1,
     borderColor: Colors.blackLight,
-    borderRadius: 4,
-    padding: 14,
-    fontSize: 15,
-    
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    fontSize: FontSize.md,
     color: Colors.blackMedium,
-    marginBottom: 20,
+    marginBottom: Spacing.lg,
   },
-  buttons: { flexDirection: 'row', gap: 12 },
+  buttons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   cancelBtn: {
     flex: 1,
-    padding: 14,
-    borderRadius: 4,
     backgroundColor: Colors.bodyBg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   cancelText: {
-    color: Colors.blackMedium,
+    fontSize: FontSize.lg,
     fontWeight: '600',
+    color: Colors.blackMedium,
   },
   submitBtn: {
     flex: 1,
-    padding: 14,
-    borderRadius: 4,
     backgroundColor: Colors.primary,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   submitText: {
-    color: Colors.white,
+    fontSize: FontSize.lg,
     fontWeight: '600',
+    color: Colors.white,
   },
 });

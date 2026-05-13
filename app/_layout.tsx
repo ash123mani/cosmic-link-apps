@@ -5,10 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, Text, TextInput } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { Poppins_400Regular } from '@expo-google-fonts/poppins';
+import { Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider, useAuth } from '@/src/context/AuthContext';
+import { AuthProvider } from '@/src/context/AuthContext';
 import { Colors, FontFamily } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -20,30 +20,17 @@ SplashScreen.preventAutoHideAsync();
 (TextInput as any).defaultProps.style = { fontFamily: FontFamily };
 
 function RootNavigator() {
-  const { user, loading } = useAuth();
   const colorScheme = useColorScheme();
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bodyBg }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        {user ? (
-          <Stack.Screen name="(tabs)" />
-        ) : (
-          <>
-            <Stack.Screen name="(auth)/login" />
-            <Stack.Screen name="(auth)/register" />
-            <Stack.Screen name="(auth)/forgot-password" />
-            <Stack.Screen name="(auth)/reset-password/[token]" />
-          </>
-        )}
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)/login" />
+        <Stack.Screen name="(auth)/register" />
+        <Stack.Screen name="(auth)/forgot-password" />
+        <Stack.Screen name="(auth)/reset-password/[token]" />
+        <Stack.Screen name="(tabs)" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
@@ -57,6 +44,8 @@ export const unstable_settings = {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
   });
 
   const onLayoutRootView = useCallback(async () => {

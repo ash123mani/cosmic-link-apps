@@ -1,29 +1,25 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { Link, router } from 'expo-router';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { router, Link } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (!name.trim() || !email.trim() || !password) {
+      Alert.alert('Info', 'Please fill in all fields');
       return;
     }
     setLoading(true);
     try {
-      await register(username.trim(), email.trim(), password);
-      router.replace('/(tabs)/links' as any);
+      await register(name.trim(), email.trim(), password);
+      router.replace('/(tabs)/links');
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Registration failed');
     } finally {
@@ -32,17 +28,17 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.appName}>Cosmic Link</Text>
-        <Text style={styles.subtitle}>Create your account</Text>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Sign up to get started</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
           placeholderTextColor={Colors.gray}
         />
         <TextInput
@@ -52,12 +48,11 @@ export default function RegisterScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          autoCorrect={false}
           placeholderTextColor={Colors.gray}
         />
         <TextInput
           style={styles.input}
-          placeholder="Password (min 6 chars)"
+          placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -68,45 +63,36 @@ export default function RegisterScreen() {
           {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Register</Text>}
         </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <Link href={"/(auth)/login" as any} style={styles.link}>
-            Login
-          </Link>
-        </View>
+        <Text style={styles.footerText}>
+          Already have an account? <Link href="/(auth)/login" style={styles.link}>Login</Link>
+        </Text>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bodyBg },
-  content: { flex: 1, justifyContent: 'center', padding: 32 },
-  appName: { fontSize: 32, fontWeight: '700', color: Colors.primary, textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16,  color: Colors.gray, textAlign: 'center', marginBottom: 32 },
+  content: { flex: 1, justifyContent: 'center', padding: Spacing.xl },
+  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.blackMedium, marginBottom: Spacing.xs, textAlign: 'center' },
+  subtitle: { fontSize: FontSize.lg, color: Colors.gray, textAlign: 'center', marginBottom: Spacing.xl },
   input: {
     backgroundColor: Colors.white,
-    borderRadius: 4,
-    padding: 16,
-    fontSize: 15,
-    
-    marginBottom: 12,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    fontSize: FontSize.md,
     color: Colors.blackMedium,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginBottom: Spacing.md,
+    ...Shadow.input,
   },
   button: {
     backgroundColor: Colors.primary,
-    borderRadius: 4,
-    padding: 16,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
-  buttonText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
-  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: 16, fontSize: 14 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { color: Colors.gray,  fontSize: 14 },
+  buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
+  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: Spacing.md, fontSize: FontSize.sm },
+  footerText: { color: Colors.gray, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.md },
 });

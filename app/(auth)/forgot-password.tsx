@@ -1,23 +1,26 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { router } from 'expo-router';
-import { useAuth } from '@/src/context/AuthContext';
-import { Colors } from '@/constants/theme';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { router, Link } from 'expo-router';
+import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
-  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleReset = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
+      Alert.alert('Info', 'Please enter your email');
       return;
     }
     setLoading(true);
     try {
-      await forgotPassword(email.trim());
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!res.ok) throw new Error('Failed to send reset email');
       setSent(true);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to send reset email');
@@ -32,21 +35,19 @@ export default function ForgotPasswordScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Check Your Email</Text>
           <Text style={styles.message}>
-            We've sent a password reset link to {email}. Please check your inbox.
+            If an account exists with that email, we've sent a password reset link.
           </Text>
-          <Pressable style={styles.button} onPress={() => router.replace('/(auth)/login' as any)}>
-            <Text style={styles.buttonText}>Back to Login</Text>
-          </Pressable>
+          <Link href="/(auth)/login" style={styles.link}>Back to Login</Link>
         </View>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.message}>Enter your email and we'll send you a reset link.</Text>
+        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.message}>Enter your email to receive a reset link</Text>
 
         <TextInput
           style={styles.input}
@@ -55,47 +56,40 @@ export default function ForgotPasswordScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          autoCorrect={false}
           placeholderTextColor={Colors.gray}
         />
 
-        <Pressable style={styles.button} onPress={handleSubmit} disabled={loading}>
+        <Pressable style={styles.button} onPress={handleReset} disabled={loading}>
           {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
         </Pressable>
 
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.link}>Back to Login</Text>
-        </Pressable>
+        <Link href="/(auth)/login" style={styles.link}>Back to Login</Link>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bodyBg },
-  content: { flex: 1, justifyContent: 'center', padding: 32 },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.blackMedium, textAlign: 'center', marginBottom: 12 },
-  message: { fontSize: 15,  color: Colors.gray, textAlign: 'center', marginBottom: 32, lineHeight: 22 },
+  content: { flex: 1, justifyContent: 'center', padding: Spacing.xl },
+  title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.blackMedium, textAlign: 'center', marginBottom: Spacing.sm + Spacing.xs },
+  message: { fontSize: FontSize.md, color: Colors.gray, textAlign: 'center', marginBottom: Spacing.xl, lineHeight: 22 },
   input: {
     backgroundColor: Colors.white,
-    borderRadius: 4,
-    padding: 16,
-    fontSize: 15,
-    
-    marginBottom: 16,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    fontSize: FontSize.md,
     color: Colors.blackMedium,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginBottom: Spacing.md,
+    ...Shadow.input,
   },
   button: {
     backgroundColor: Colors.primary,
-    borderRadius: 4,
-    padding: 16,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
+    marginTop: Spacing.xs,
   },
-  buttonText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
-  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: 20, fontSize: 14 },
+  buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
+  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: Spacing.md, fontSize: FontSize.sm },
 });

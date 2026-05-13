@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
 import { LinkMetaPreview } from './LinkMetaPreview';
 
 interface Category {
@@ -30,9 +30,11 @@ interface Props {
     siteName?: string;
   }) => Promise<void>;
   onFetchMeta: (url: string) => Promise<LinkMeta>;
+  initialUrl?: string;
+  autoFetch?: boolean;
 }
 
-export function AddLinkModal({ visible, onClose, categories, selectedCategory, onSubmit, onFetchMeta }: Props) {
+export function AddLinkModal({ visible, onClose, categories, selectedCategory, onSubmit, onFetchMeta, initialUrl, autoFetch }: Props) {
   const [url, setUrl] = useState('');
   const [meta, setMeta] = useState<LinkMeta | null>(null);
   const [title, setTitle] = useState('');
@@ -40,6 +42,24 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
   const [category, setCategory] = useState<Category | null>(selectedCategory);
   const [loading, setLoading] = useState(false);
   const [fetchingMeta, setFetchingMeta] = useState(false);
+  const autoFetched = useRef(false);
+
+  useEffect(() => {
+    if (visible && initialUrl) {
+      setUrl(initialUrl);
+      setMeta(null);
+      setTitle('');
+      setDescription('');
+      autoFetched.current = false;
+    }
+  }, [visible, initialUrl]);
+
+  useEffect(() => {
+    if (visible && initialUrl && autoFetch && url === initialUrl && !autoFetched.current && !fetchingMeta) {
+      autoFetched.current = true;
+      handleFetchMeta();
+    }
+  }, [visible, initialUrl, autoFetch, url]);
 
   const handleFetchMeta = async () => {
     if (!url.trim()) {
@@ -162,36 +182,35 @@ export function AddLinkModal({ visible, onClose, categories, selectedCategory, o
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'flex-end',
   },
   modal: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    padding: 24,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    padding: Spacing.lg,
     maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   heading: {
-    fontSize: 20,
+    fontSize: FontSize.xl,
     fontWeight: '700',
     color: Colors.blackMedium,
   },
-  close: { fontSize: 22, color: Colors.gray, padding: 4 },
+  close: { fontSize: 22, color: Colors.gray, padding: Spacing.xs },
   input: {
     borderWidth: 1,
     borderColor: Colors.blackLight,
-    borderRadius: 4,
-    padding: 14,
-    fontSize: 15,
-    
-    marginBottom: 12,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    fontSize: FontSize.md,
+    marginBottom: Spacing.sm + Spacing.xs,
     color: Colors.blackMedium,
   },
   textArea: {
@@ -199,51 +218,51 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   label: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     fontWeight: '600',
     color: Colors.blackMedium,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
     backgroundColor: Colors.bodyBg,
   },
   categoryChipActive: { backgroundColor: Colors.primary },
   categoryChipText: {
-    fontSize: 13,
+    fontSize: FontSize.xs,
     fontWeight: '600',
     color: Colors.blackMedium,
   },
   categoryChipTextActive: { color: Colors.white },
   fetchBtn: {
     backgroundColor: Colors.primary,
-    padding: 14,
-    borderRadius: 4,
+    padding: Spacing.sm + 6,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.md,
   },
   fetchBtnText: {
     color: Colors.white,
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: FontSize.md,
   },
   submitBtn: {
     backgroundColor: Colors.primary,
-    padding: 16,
-    borderRadius: 4,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
   },
   submitBtnText: {
     color: Colors.white,
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
 });
