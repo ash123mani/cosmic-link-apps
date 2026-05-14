@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { router, Link } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
+import { CosmicCard } from '@/src/components/CosmicCard';
+import { PressableScale } from '@/src/components/PressableScale';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
@@ -29,9 +32,14 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up to get started</Text>
+      <PressableScale onPress={() => router.back()} style={styles.backBtn}>
+        <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
+      </PressableScale>
+      <CosmicCard style={{ marginHorizontal: Spacing.lg }}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
+        </View>
 
         <TextInput
           style={styles.input}
@@ -39,7 +47,7 @@ export default function RegisterScreen() {
           value={name}
           onChangeText={setName}
           autoCapitalize="words"
-          placeholderTextColor={Colors.gray}
+          placeholderTextColor={Colors.textMuted}
         />
         <TextInput
           style={styles.input}
@@ -48,7 +56,7 @@ export default function RegisterScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholderTextColor={Colors.gray}
+          placeholderTextColor={Colors.textMuted}
         />
         <TextInput
           style={styles.input}
@@ -56,43 +64,64 @@ export default function RegisterScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholderTextColor={Colors.gray}
+          placeholderTextColor={Colors.textMuted}
         />
 
-        <Pressable style={styles.button} onPress={handleRegister} disabled={loading}>
-          {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Register</Text>}
-        </Pressable>
+        <PressableScale style={styles.button} onPress={handleRegister} disabled={loading}>
+          {loading ? <ActivityIndicator color={Colors.white} /> : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialIcons name="person-add" size={20} color={Colors.white} />
+              <Text style={styles.buttonText}>Register</Text>
+            </View>
+          )}
+        </PressableScale>
 
         <Text style={styles.footerText}>
           Already have an account? <Link href="/(auth)/login" style={styles.link}>Login</Link>
         </Text>
-      </View>
+      </CosmicCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bodyBg },
-  content: { flex: 1, justifyContent: 'center', padding: Spacing.xl },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.blackMedium, marginBottom: Spacing.xs, textAlign: 'center' },
-  subtitle: { fontSize: FontSize.lg, color: Colors.gray, textAlign: 'center', marginBottom: Spacing.xl },
+  container: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
+  backBtn: {
+    position: 'absolute',
+    top: 60,
+    left: Spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.bgLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    zIndex: 10,
+  },
+  header: { alignItems: 'center', marginBottom: Spacing.lg },
+  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text },
+  subtitle: { fontSize: FontSize.md, color: Colors.textSecondary, marginTop: Spacing.xs },
   input: {
-    backgroundColor: Colors.white,
-    padding: Spacing.md,
+    fontFamily: FontFamily,
+    backgroundColor: Colors.bgLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     fontSize: FontSize.md,
-    color: Colors.blackMedium,
+    color: Colors.text,
     marginBottom: Spacing.md,
-    ...Shadow.input,
   },
   button: {
     backgroundColor: Colors.primary,
-    padding: Spacing.md,
     borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     alignItems: 'center',
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
   buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
-  link: { color: Colors.primary, fontWeight: '600', textAlign: 'center', marginTop: Spacing.md, fontSize: FontSize.sm },
-  footerText: { color: Colors.gray, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.md },
+  link: { color: Colors.text, fontWeight: '600', textAlign: 'center', marginTop: Spacing.md, fontSize: FontSize.sm, textDecorationLine: 'underline' },
+  footerText: { color: Colors.textSecondary, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.lg },
 });

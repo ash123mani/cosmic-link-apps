@@ -1,27 +1,33 @@
 export const Colors = {
-  primary: '#7C3AED',
-  primaryMedium: '#7C3AEDA1',
-  primaryLight: '#7C3AED4F',
+  bg: '#FFFFFF',
+  bgLight: '#F2F2F7',
+  bgCard: '#FFFFFF',
+  primary: '#1C1C1E',
+  primaryGlow: 'rgba(0,0,0,0.06)',
+  primaryLight: 'rgba(0,0,0,0.04)',
+  blue: '#1C1C1E',
+  blueGlow: 'rgba(0,0,0,0.06)',
+  pink: '#1C1C1E',
+  pinkGlow: 'rgba(0,0,0,0.06)',
   white: '#FFFFFF',
-  black: '#000000',
-  blackMedium: '#1E1B2E',
-  blackLight: '#DDD6FE',
-  bodyBg: '#F5F3FF',
-  gray: '#8B83A0',
-  error: '#DC2626',
-  warning: '#F59E0B',
-  submit: '#10B981',
-  delete: '#EF4444',
-  overlay: 'rgba(0,0,0,0.5)',
-  deleteBg: '#FEE',
+  text: '#1C1C1E',
+  textSecondary: 'rgba(28,28,30,0.6)',
+  textMuted: 'rgba(28,28,30,0.3)',
+  border: 'rgba(60,60,67,0.12)',
+  borderActive: 'rgba(60,60,67,0.25)',
+  error: '#FF3B30',
+  errorBg: 'rgba(255,59,48,0.08)',
+  errorBorder: 'rgba(255,59,48,0.2)',
+  success: '#34C759',
+  overlay: 'rgba(0,0,0,0.3)',
 };
 
 export const FontFamily = 'Poppins_400Regular';
 
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 10,
+  md: 14,
+  lg: 18,
 };
 
 export const Spacing = {
@@ -43,33 +49,13 @@ export const FontSize = {
   display: 32,
 };
 
-export const Shadow = {
-  sm: {
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+export const Animation = {
+  duration: {
+    fast: 200,
+    normal: 300,
+    slow: 500,
   },
-  md: {
-    shadowColor: Colors.black,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  tab: {
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-  input: {
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  stagger: {
+    card: 80,
   },
 };

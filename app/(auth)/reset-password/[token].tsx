@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
+import { CosmicCard } from '@/src/components/CosmicCard';
+import { PressableScale } from '@/src/components/PressableScale';
 
 export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -33,7 +36,7 @@ export default function ResetPasswordScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <CosmicCard style={{ marginHorizontal: Spacing.lg }}>
         <Text style={styles.title}>New Password</Text>
         <Text style={styles.message}>Enter your new password below</Text>
 
@@ -43,37 +46,42 @@ export default function ResetPasswordScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholderTextColor={Colors.gray}
+          placeholderTextColor={Colors.textMuted}
         />
 
-        <Pressable style={styles.button} onPress={handleReset} disabled={loading}>
-          {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.buttonText}>Reset Password</Text>}
-        </Pressable>
-      </View>
+        <PressableScale style={styles.button} onPress={handleReset} disabled={loading}>
+          {loading ? <ActivityIndicator color={Colors.white} /> : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialIcons name="lock-reset" size={18} color={Colors.white} />
+              <Text style={styles.buttonText}>Reset Password</Text>
+            </View>
+          )}
+        </PressableScale>
+      </CosmicCard>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bodyBg },
-  content: { flex: 1, justifyContent: 'center', padding: Spacing.xl },
-  title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.blackMedium, textAlign: 'center', marginBottom: Spacing.sm + Spacing.xs },
-  message: { fontSize: FontSize.md, color: Colors.gray, textAlign: 'center', marginBottom: Spacing.xl, lineHeight: 22 },
+  container: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
+  title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text, textAlign: 'center', marginBottom: Spacing.sm },
+  message: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center', marginBottom: Spacing.lg, lineHeight: 22 },
   input: {
-    backgroundColor: Colors.white,
-    padding: Spacing.md,
+    fontFamily: FontFamily,
+    backgroundColor: Colors.bgLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     fontSize: FontSize.md,
-    color: Colors.blackMedium,
+    color: Colors.text,
     marginBottom: Spacing.md,
-    ...Shadow.input,
   },
   button: {
     backgroundColor: Colors.primary,
-    padding: Spacing.md,
     borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
     alignItems: 'center',
-    marginTop: Spacing.xs,
   },
   buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
 });

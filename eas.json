@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 18.12.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://cosmic-link-be.onrender.com"
+      }
+    },
+    "apk": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://cosmic-link-be.onrender.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

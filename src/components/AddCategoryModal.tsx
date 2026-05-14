@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { Colors, BorderRadius, Spacing, FontSize } from '@/constants/theme';
+import { View, Text, StyleSheet, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
+import { PressableScale } from './PressableScale';
 
 interface Props {
   visible: boolean;
@@ -33,21 +35,31 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Add Category</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Add Category</Text>
+            <PressableScale onPress={onClose}>
+              <MaterialIcons name="close" size={24} color={Colors.textMuted} />
+            </PressableScale>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Category name"
             value={name}
             onChangeText={setName}
-            placeholderTextColor={Colors.gray}
+            placeholderTextColor={Colors.textMuted}
           />
           <View style={styles.buttons}>
-            <Pressable style={styles.cancelBtn} onPress={onClose}>
+            <PressableScale style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-              {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.submitText}>Add</Text>}
-            </Pressable>
+            </PressableScale>
+            <PressableScale style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
+              {loading ? <ActivityIndicator color={Colors.white} /> : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <MaterialIcons name="folder" size={18} color={Colors.white} />
+                  <Text style={styles.submitText}>Add</Text>
+                </View>
+              )}
+            </PressableScale>
           </View>
         </View>
       </View>
@@ -63,23 +75,32 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   modal: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.bg,
     borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   title: {
     fontSize: FontSize.xl,
     fontWeight: '700',
-    color: Colors.blackMedium,
-    marginBottom: Spacing.md,
+    color: Colors.text,
   },
   input: {
+    fontFamily: FontFamily,
     borderWidth: 1,
-    borderColor: Colors.blackLight,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
     fontSize: FontSize.md,
-    color: Colors.blackMedium,
+    color: Colors.text,
+    backgroundColor: Colors.bgLight,
     marginBottom: Spacing.lg,
   },
   buttons: {
@@ -88,15 +109,17 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    backgroundColor: Colors.bodyBg,
+    backgroundColor: Colors.bgLight,
     padding: Spacing.md,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   cancelText: {
     fontSize: FontSize.lg,
     fontWeight: '600',
-    color: Colors.blackMedium,
+    color: Colors.text,
   },
   submitBtn: {
     flex: 1,

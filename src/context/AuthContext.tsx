@@ -44,8 +44,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await api<{ success: boolean; user: User }>('/api/v1/user', { auth: true });
         setUser(res.user);
       }
-    } catch {
-      await removeToken();
+    } catch (err: any) {
+      if (err.statusCode === 401) {
+        await removeToken();
+      }
     } finally {
       setLoading(false);
     }

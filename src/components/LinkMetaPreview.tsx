@@ -32,8 +32,10 @@ export function LinkMetaPreview({ meta }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.bodyBg,
+    backgroundColor: Colors.bgLight,
     borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   image: { width: '100%', height: 160 },
@@ -41,12 +43,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.md,
     fontWeight: '600',
-    color: Colors.blackMedium,
+    color: Colors.text,
     marginBottom: 4,
   },
   description: {
     fontSize: FontSize.xs,
-    color: Colors.gray,
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   siteName: {

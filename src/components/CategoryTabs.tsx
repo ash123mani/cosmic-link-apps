@@ -1,6 +1,9 @@
 import { useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
-import { Colors, BorderRadius, Spacing, FontSize, Shadow } from '@/constants/theme';
+import { View, Text, StyleSheet, ScrollView, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { Colors, BorderRadius, Spacing, FontSize, Animation } from '@/constants/theme';
+import { PressableScale } from './PressableScale';
 
 interface Category {
   name: string;
@@ -40,51 +43,54 @@ export function CategoryTabs({ categories, selectedId, onSelect }: Props) {
   };
 
   return (
-    <View style={styles.wrapper} onLayout={onLayout}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.container}
-        onContentSizeChange={onContentSizeChange}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
-        {categories.map(cat => (
-          <Pressable
-            key={cat.id}
-            style={[styles.tab, selectedId === cat.id && styles.tabActive]}
-            onPress={() => onSelect(cat)}
-          >
-            <Text style={[styles.tabText, selectedId === cat.id && styles.tabTextActive]}>
-              {cat.name}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+    <Animated.View entering={FadeIn.duration(Animation.duration.normal)}>
+      <View style={styles.wrapper} onLayout={onLayout}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.container}
+          onContentSizeChange={onContentSizeChange}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+        >
+          {categories.map(cat => (
+            <PressableScale
+              key={cat.id}
+              style={[styles.tab, selectedId === cat.id && styles.tabActive]}
+              onPress={() => onSelect(cat)}
+            >
+              <MaterialIcons
+                name="folder"
+                size={14}
+                color={selectedId === cat.id ? Colors.white : Colors.primary}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.tabText, selectedId === cat.id && styles.tabTextActive]}>
+                {cat.name}
+              </Text>
+            </PressableScale>
+          ))}
+        </ScrollView>
 
-      {canScrollLeft && (
-        <Pressable style={styles.arrowLeft} onPress={() => scrollTo('left')}>
-          <Text style={styles.arrowText}>‹</Text>
-        </Pressable>
-      )}
-      {canScrollRight && (
-        <Pressable style={styles.arrowRight} onPress={() => scrollTo('right')}>
-          <Text style={styles.arrowText}>›</Text>
-        </Pressable>
-      )}
-    </View>
+        {canScrollLeft && (
+          <PressableScale style={styles.arrowLeft} onPress={() => scrollTo('left')}>
+            <MaterialIcons name="chevron-left" size={20} color={Colors.primary} />
+          </PressableScale>
+        )}
+        {canScrollRight && (
+          <PressableScale style={styles.arrowRight} onPress={() => scrollTo('right')}>
+            <MaterialIcons name="chevron-right" size={20} color={Colors.primary} />
+          </PressableScale>
+        )}
+      </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
-    shadowColor: Colors.black,
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
     zIndex: 1,
   },
   container: {
@@ -96,15 +102,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl - 12,
     paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.bgLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
     marginRight: Spacing.sm,
-    ...Shadow.tab,
   },
-  tabActive: { backgroundColor: Colors.primary },
+  tabActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   tabText: {
     fontSize: FontSize.sm,
     fontWeight: '600',
-    color: Colors.blackMedium,
+    color: Colors.text,
   },
   tabTextActive: { color: Colors.white },
   arrowLeft: {
@@ -113,13 +120,12 @@ const styles = StyleSheet.create({
     top: Spacing.sm + Spacing.xs,
     bottom: Spacing.sm + Spacing.xs,
     width: 28,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.bgLight,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.blackLight,
-    ...Shadow.md,
+    borderColor: Colors.border,
   },
   arrowRight: {
     position: 'absolute',
@@ -127,18 +133,12 @@ const styles = StyleSheet.create({
     top: Spacing.sm + Spacing.xs,
     bottom: Spacing.sm + Spacing.xs,
     width: 28,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.bgLight,
     borderRadius: BorderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.blackLight,
-    ...Shadow.md,
+    borderColor: Colors.border,
   },
-  arrowText: {
-    fontSize: 22,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginTop: -1,
-  },
+
 });

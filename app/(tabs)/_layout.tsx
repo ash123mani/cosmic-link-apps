@@ -1,14 +1,12 @@
 import { Tabs, Redirect } from 'expo-router';
 import React from 'react';
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/src/context/AuthContext';
 
 export default function TabLayout() {
   const { user } = useAuth();
-  const colorScheme = useColorScheme();
 
   if (!user) {
     return <Redirect href="/" />;
@@ -17,22 +15,35 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
+        tabBarActiveTintColor: Colors.text,
+        tabBarInactiveTintColor: Colors.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: Colors.bg,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+        },
       }}>
       <Tabs.Screen
         name="links"
         options={{
           title: 'Links',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="link" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="link" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="add-link"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="person" color={color} />,
         }}
       />
     </Tabs>

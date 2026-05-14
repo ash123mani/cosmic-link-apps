@@ -16,9 +16,6 @@ SplashScreen.preventAutoHideAsync();
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: FontFamily };
 
-(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-(TextInput as any).defaultProps.style = { fontFamily: FontFamily };
-
 function RootNavigator() {
   const colorScheme = useColorScheme();
 
@@ -32,7 +29,7 @@ function RootNavigator() {
         <Stack.Screen name="(auth)/reset-password/[token]" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </ThemeProvider>
   );
 }
@@ -59,7 +56,7 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1, backgroundColor: Colors.bg }} onLayout={onLayoutRootView}>
       <AuthProvider>
         <RootNavigator />
       </AuthProvider>
