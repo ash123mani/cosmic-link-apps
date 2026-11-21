@@ -1,99 +1,116 @@
-import { View, Text, StyleSheet, Linking } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, BorderRadius, Spacing, FontSize } from '@/constants/theme';
-import { CosmicCard } from '@/src/components/CosmicCard';
-import { PressableScale } from '@/src/components/PressableScale';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import { spacing } from '@/src/theme/tokens';
+import { Card, IconButton, Pressable, Text } from '@/src/ui';
+
+const SUPPORT_EMAIL = 'copycutsave@gmail.com';
 
 export default function ContactScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+
+  const openMail = () => {
+    void Linking.openURL(`mailto:${SUPPORT_EMAIL}`);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <PressableScale style={styles.backBtn} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
-        </PressableScale>
-        <Text style={styles.title}>Contact Us</Text>
-      </View>
-      <CosmicCard style={styles.card}>
-        <View style={styles.iconCircle}>
-          <MaterialIcons name="mail-outline" size={32} color={Colors.primary} />
-        </View>
-        <Text style={styles.heading}>Get in Touch</Text>
-        <Text style={styles.body}>
-          For any support, feedback, or queries, reach out to us at:
+        <IconButton
+          icon={<MaterialIcons name="arrow-back" size={24} color={colors.text} />}
+          accessibilityLabel="Go back"
+          variant="surface"
+          onPress={() => router.back()}
+        />
+        <Text variant="title2" style={styles.headerTitle}>
+          Contact us
         </Text>
-        <PressableScale style={styles.emailRow} onPress={() => Linking.openURL('mailto:copycutsave@gmail.com')}>
-          <MaterialIcons name="email" size={20} color={Colors.primary} />
-          <Text style={styles.email}>copycutsave@gmail.com</Text>
-        </PressableScale>
-        <Text style={styles.body}>We'll get back to you as soon as possible.</Text>
-      </CosmicCard>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Card style={styles.card}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.accentMuted }]}>
+            <MaterialIcons name="support-agent" size={30} color={colors.accent} />
+          </View>
+          <Text variant="title3" style={styles.heading}>
+            We&apos;re here to help
+          </Text>
+          <Text variant="bodySm" tone="textSecondary" style={styles.body}>
+            Questions, feedback or ideas for Cosmic Link? Send us a note and we&apos;ll get back to
+            you as soon as we can.
+          </Text>
+
+          <Pressable
+            onPress={openMail}
+            haptic="light"
+            accessibilityRole="link"
+            accessibilityLabel={`Email ${SUPPORT_EMAIL}`}
+            style={[
+              styles.emailRow,
+              { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+            ]}
+          >
+            <MaterialIcons name="mail" size={20} color={colors.accent} />
+            <Text variant="bodyStrong" color={colors.accent} numberOfLines={1}>
+              {SUPPORT_EMAIL}
+            </Text>
+          </Pressable>
+        </Card>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[3],
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  headerTitle: {
+    flex: 1,
   },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text, flex: 1 },
+  headerSpacer: {
+    width: 44,
+  },
+  content: {
+    padding: spacing[4],
+    paddingBottom: spacing[10],
+  },
   card: {
     alignItems: 'center',
-    gap: Spacing.md,
-    marginHorizontal: Spacing.md,
+    gap: spacing[3],
+    marginTop: spacing[2],
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heading: {
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    color: Colors.text,
+    textAlign: 'center',
   },
   body: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   emailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.bgLight,
-    paddingVertical: Spacing.sm + 4,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.sm,
+    gap: spacing[2],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  email: {
-    fontSize: FontSize.lg,
-    color: Colors.primary,
-    fontWeight: '600',
+    marginTop: spacing[1],
   },
 });

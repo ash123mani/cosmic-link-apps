@@ -1,120 +1,219 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { router, Link } from 'expo-router';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Link, router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
-import { CosmicCard } from '@/src/components/CosmicCard';
-import { PressableScale } from '@/src/components/PressableScale';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import { spacing } from '@/src/theme/tokens';
+import { Button, Field, IconButton, Input, Text } from '@/src/ui';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState<string | undefined>();
+  const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [formError, setFormError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert('Info', 'Please fill in all fields');
-      return;
+    const trimmedEmail = email.trim();
+    let valid = true;
+    setFormError(undefined);
+
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      setEmailError('Enter a valid email address');
+      valid = false;
     }
+    if (!password) {
+      setPasswordError('Enter your password');
+      valid = false;
+    }
+    if (!valid) return;
+
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(trimmedEmail, password);
       router.replace('/(tabs)/links');
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Login failed');
+    } catch (err) {
+      const message = (err as { message?: string })?.message;
+      setFormError(message || 'Could not sign in. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <PressableScale onPress={() => router.back()} style={styles.backBtn}>
-        <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
-      </PressableScale>
-      <CosmicCard style={{ marginHorizontal: Spacing.lg }}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
-        </View>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholderTextColor={Colors.textMuted}
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.topBar}>
+        <IconButton
+          icon={<MaterialIcons name="arrow-back" size={24} color={colors.text} />}
+          accessibilityLabel="Go back"
+          variant="surface"
+          onPress={() => router.back()}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor={Colors.textMuted}
-        />
+      </View>
 
-        <Link href="/(auth)/forgot-password" style={styles.link}>Forgot Password?</Link>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <Text variant="overline" tone="accent">
+            Welcome back
+          </Text>
+          <Text variant="title1" style={styles.title}>
+            Sign in
+          </Text>
+          <Text variant="bodySm" tone="textSecondary" style={styles.subtitle}>
+            Access your saved links from anywhere.
+          </Text>
 
-        <PressableScale style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color={Colors.white} /> : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <MaterialIcons name="login" size={20} color={Colors.white} />
-              <Text style={styles.buttonText}>Login</Text>
+          {formError ? (
+            <View style={[styles.formError, { backgroundColor: colors.dangerMuted }]}>
+              <MaterialIcons name="error-outline" size={18} color={colors.danger} />
+              <Text variant="bodySm" color={colors.danger} style={styles.formErrorText}>
+                {formError}
+              </Text>
             </View>
-          )}
-        </PressableScale>
+          ) : null}
 
-        <Text style={styles.footerText}>
-          Don't have an account? <Link href="/(auth)/register" style={styles.link}>Register</Link>
-        </Text>
-      </CosmicCard>
-    </View>
+          <Field label="Email" required error={emailError}>
+            <Input
+              value={email}
+              onChangeText={(value) => {
+                setEmail(value);
+                if (emailError) setEmailError(undefined);
+                if (formError) setFormError(undefined);
+              }}
+              placeholder="you@example.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              autoComplete="email"
+              invalid={!!emailError}
+            />
+          </Field>
+
+          <Field label="Password" required error={passwordError}>
+            <Input
+              value={password}
+              onChangeText={(value) => {
+                setPassword(value);
+                if (passwordError) setPasswordError(undefined);
+                if (formError) setFormError(undefined);
+              }}
+              placeholder="Your password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+              autoComplete="password"
+              invalid={!!passwordError}
+              returnKeyType="done"
+              onSubmitEditing={() => void handleLogin()}
+              rightAccessory={
+                <IconButton
+                  icon={
+                    <MaterialIcons
+                      name={showPassword ? 'visibility-off' : 'visibility'}
+                      size={20}
+                      color={colors.textTertiary}
+                    />
+                  }
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  size={32}
+                  onPress={() => setShowPassword((value) => !value)}
+                />
+              }
+            />
+          </Field>
+
+          <Link href="/(auth)/forgot-password" asChild>
+            <Text
+              variant="label"
+              tone="accent"
+              style={styles.forgotLink}
+              accessibilityRole="link"
+            >
+              Forgot password?
+            </Text>
+          </Link>
+
+          <Button label="Sign in" onPress={() => void handleLogin()} loading={loading} />
+
+          <View style={styles.footer}>
+            <Text variant="bodySm" tone="textSecondary">
+              Don&apos;t have an account?{' '}
+            </Text>
+            <Link href="/(auth)/register" asChild>
+              <Text variant="bodyStrong" tone="accent" accessibilityRole="link">
+                Create one
+              </Text>
+            </Link>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
-  backBtn: {
-    position: 'absolute',
-    top: 60,
-    left: Spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
+  container: { flex: 1 },
+  topBar: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    zIndex: 10,
+    padding: spacing[4],
   },
-  header: { alignItems: 'center', marginBottom: Spacing.lg },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text },
-  subtitle: { fontSize: FontSize.md, color: Colors.textSecondary, marginTop: Spacing.xs },
-  input: {
-    fontFamily: FontFamily,
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.text,
-    marginBottom: Spacing.md,
+  card: {
+    width: '100%',
+    maxWidth: 460,
+    alignSelf: 'center',
   },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
+  title: {
+    marginTop: 6,
+    marginBottom: spacing[2],
+  },
+  subtitle: {
+    marginBottom: spacing[5],
+    lineHeight: 20,
+  },
+  formError: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.md,
+    gap: spacing[2],
+    padding: spacing[3],
+    borderRadius: 12,
+    marginBottom: spacing[4],
   },
-  buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
-  link: { color: Colors.text, fontWeight: '600', textAlign: 'center', marginTop: Spacing.md, fontSize: FontSize.sm, textDecorationLine: 'underline' },
-  footerText: { color: Colors.textSecondary, fontSize: FontSize.sm, textAlign: 'center', marginTop: Spacing.lg },
+  formErrorText: {
+    flex: 1,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginTop: -6,
+    marginBottom: spacing[5],
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing[5],
+  },
 });

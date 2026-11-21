@@ -1,36 +1,92 @@
-import { useCallback } from 'react';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useEffect, useMemo } from 'react';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, Text, TextInput } from 'react-native';
+import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import {
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import 'react-native-reanimated';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider } from '@/src/context/AuthContext';
-import { Colors, FontFamily } from '@/constants/theme';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from '@/src/context/AuthContext';
+import { ThemeProvider, useTheme } from '@/src/theme/ThemeProvider';
+import { ToastProvider } from '@/src/ui/Toast';
+import { queryClient } from '@/src/data/queryClient';
+import { addPushListeners, registerPushNotifications } from '@/src/notifications/push';
 
 SplashScreen.preventAutoHideAsync();
 
-(Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.style = { fontFamily: FontFamily };
-
 function RootNavigator() {
-  const colorScheme = useColorScheme();
+  const { theme, colors } = useTheme();
+
+  const navigationTheme = useMemo(() => {
+    const base = theme.isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: colors.accent,
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.danger,
+      },
+    };
+  }, [theme.isDark, colors]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
+    <NavigationThemeProvider value={navigationTheme}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(auth)/register" />
         <Stack.Screen name="(auth)/forgot-password" />
         <Stack.Screen name="(auth)/reset-password/[token]" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="link/[id]" />
       </Stack>
-      <StatusBar style="dark" />
-    </ThemeProvider>
+    </NavigationThemeProvider>
+  );
+}
+
+function AppGate({ fontsReady }: { fontsReady: boolean }) {
+  const { loading, user } = useAuth();
+  const { theme, colors } = useTheme();
+  const ready = fontsReady && !loading;
+
+  useEffect(() => {
+    if (ready) {
+      void SplashScreen.hideAsync();
+    }
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready || !user) return;
+    void registerPushNotifications();
+    const removeListeners = addPushListeners();
+    return removeListeners;
+  }, [ready, user]);
+
+  if (!ready) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <RootNavigator />
+      <StatusBar style={theme.isDark ? 'light' : 'dark'} />
+    </View>
   );
 }
 
@@ -45,21 +101,19 @@ export default function RootLayout() {
     Poppins_700Bold,
   });
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.bg }} onLayout={onLayoutRootView}>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <AppGate fontsReady={fontsLoaded || !!fontError} />
+              </ToastProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

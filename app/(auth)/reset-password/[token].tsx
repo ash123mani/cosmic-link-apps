@@ -1,87 +1,195 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
-import { CosmicCard } from '@/src/components/CosmicCard';
-import { PressableScale } from '@/src/components/PressableScale';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api } from '@/src/api/client';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import { spacing } from '@/src/theme/tokens';
+import { Button, Field, IconButton, Input, Text, useToast } from '@/src/ui';
 
 export default function ResetPasswordScreen() {
-  const { token } = useLocalSearchParams<{ token: string }>();
+  const params = useLocalSearchParams<{ token?: string | string[] }>();
+  const token = Array.isArray(params.token) ? params.token[0] : params.token;
+  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const { showToast } = useToast();
+
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [confirmError, setConfirmError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
-    if (!password) {
-      Alert.alert('Info', 'Please enter a new password');
-      return;
+    if (!token) return;
+
+    let valid = true;
+    if (password.length < 6) {
+      setPasswordError('Use at least 6 characters');
+      valid = false;
     }
+    if (confirm !== password) {
+      setConfirmError('Passwords do not match');
+      valid = false;
+    }
+    if (!valid) return;
+
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+      await api(`/api/v1/auth/resetpassword/${encodeURIComponent(token)}`, {
+        method: 'PUT',
+        body: { password },
       });
-      if (!res.ok) throw new Error('Failed to reset password');
-      Alert.alert('Success', 'Password has been reset', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-      ]);
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to reset password');
+      showToast({ message: 'Password updated — please sign in', tone: 'success' });
+      router.replace('/(auth)/login');
+    } catch (err) {
+      const message = (err as { message?: string })?.message;
+      setPasswordError(message || 'This reset link may have expired');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <CosmicCard style={{ marginHorizontal: Spacing.lg }}>
-        <Text style={styles.title}>New Password</Text>
-        <Text style={styles.message}>Enter your new password below</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="New password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor={Colors.textMuted}
+  if (!token) {
+    return (
+      <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
+        <MaterialIcons name="link-off" size={40} color={colors.textTertiary} />
+        <Text variant="title2" style={styles.centeredText}>
+          Invalid reset link
+        </Text>
+        <Text variant="bodySm" tone="textSecondary" style={styles.centeredText}>
+          This link is missing a token. Request a new password reset email.
+        </Text>
+        <Button
+          label="Back to login"
+          onPress={() => router.replace('/(auth)/login')}
+          style={styles.action}
         />
+      </View>
+    );
+  }
 
-        <PressableScale style={styles.button} onPress={handleReset} disabled={loading}>
-          {loading ? <ActivityIndicator color={Colors.white} /> : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <MaterialIcons name="lock-reset" size={18} color={Colors.white} />
-              <Text style={styles.buttonText}>Reset Password</Text>
-            </View>
-          )}
-        </PressableScale>
-      </CosmicCard>
-    </View>
+  return (
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.topBar}>
+        <IconButton
+          icon={<MaterialIcons name="arrow-back" size={24} color={colors.text} />}
+          accessibilityLabel="Go back"
+          variant="surface"
+          onPress={() => router.replace('/(auth)/login')}
+        />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
+          <Text variant="overline" tone="accent">
+            New credentials
+          </Text>
+          <Text variant="title1" style={styles.title}>
+            Set a new password
+          </Text>
+          <Text variant="bodySm" tone="textSecondary" style={styles.subtitle}>
+            Choose a password you haven&apos;t used before. You&apos;ll sign in with it next time.
+          </Text>
+
+          <Field label="New password" required error={passwordError}>
+            <Input
+              value={password}
+              onChangeText={(value) => {
+                setPassword(value);
+                if (passwordError) setPasswordError(undefined);
+              }}
+              placeholder="At least 6 characters"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="newPassword"
+              invalid={!!passwordError}
+              rightAccessory={
+                <IconButton
+                  icon={
+                    <MaterialIcons
+                      name={showPassword ? 'visibility-off' : 'visibility'}
+                      size={20}
+                      color={colors.textTertiary}
+                    />
+                  }
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  size={32}
+                  onPress={() => setShowPassword((value) => !value)}
+                />
+              }
+            />
+          </Field>
+
+          <Field label="Confirm password" required error={confirmError}>
+            <Input
+              value={confirm}
+              onChangeText={(value) => {
+                setConfirm(value);
+                if (confirmError) setConfirmError(undefined);
+              }}
+              placeholder="Re-enter your password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="newPassword"
+              invalid={!!confirmError}
+              returnKeyType="done"
+              onSubmitEditing={() => void handleReset()}
+            />
+          </Field>
+
+          <Button label="Update password" onPress={() => void handleReset()} loading={loading} />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center' },
-  title: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text, textAlign: 'center', marginBottom: Spacing.sm },
-  message: { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center', marginBottom: Spacing.lg, lineHeight: 22 },
-  input: {
-    fontFamily: FontFamily,
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.text,
-    marginBottom: Spacing.md,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
+  container: { flex: 1 },
+  centered: {
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing[6],
+    gap: spacing[2],
   },
-  buttonText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
+  centeredText: {
+    textAlign: 'center',
+  },
+  action: {
+    marginTop: spacing[4],
+  },
+  topBar: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing[4],
+  },
+  card: {
+    width: '100%',
+    maxWidth: 460,
+    alignSelf: 'center',
+  },
+  title: {
+    marginTop: 6,
+    marginBottom: spacing[2],
+  },
+  subtitle: {
+    marginBottom: spacing[5],
+    lineHeight: 20,
+  },
 });

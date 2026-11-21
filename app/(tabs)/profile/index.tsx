@@ -1,113 +1,198 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors, BorderRadius, Spacing, FontSize } from '@/constants/theme';
-import { CosmicCard } from '@/src/components/CosmicCard';
-import { PressableScale } from '@/src/components/PressableScale';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import type { ThemePreference } from '@/src/theme/themes';
+import { spacing } from '@/src/theme/tokens';
+import {
+  Button,
+  Card,
+  Divider,
+  Pressable,
+  SegmentedControl,
+  Text,
+} from '@/src/ui';
+
+const THEME_OPTIONS = [
+  { label: 'System', value: 'system' as ThemePreference },
+  { label: 'Light', value: 'light' as ThemePreference },
+  { label: 'Dark', value: 'dark' as ThemePreference },
+];
+
+interface MenuRowProps {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  onPress: () => void;
+  last?: boolean;
+}
 
 export default function ProfileIndexScreen() {
   const insets = useSafeAreaInsets();
-  const { logout } = useAuth();
+  const { colors, preference, setPreference } = useTheme();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/');
+  };
+
+  const MenuRow = ({ icon, label, onPress, last }: MenuRowProps) => (
+    <>
+      <Pressable
+        onPress={onPress}
+        haptic="light"
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={styles.menuRow}
+      >
+        <View style={[styles.menuIcon, { backgroundColor: colors.accentMuted }]}>
+          <MaterialIcons name={icon} size={20} color={colors.accent} />
+        </View>
+        <Text variant="body" style={styles.menuLabel}>
+          {label}
+        </Text>
+        <MaterialIcons name="chevron-right" size={22} color={colors.textTertiary} />
+      </Pressable>
+      {last ? null : <Divider style={styles.menuDivider} />}
+    </>
+  );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[3] }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text variant="title1">Profile</Text>
 
-      <CosmicCard padding={0} style={{ marginHorizontal: Spacing.md }}>
-        <PressableScale style={styles.menuRow} onPress={() => router.push('/(tabs)/profile/categories')}>
-          <View style={styles.menuLeft}>
-            <View style={styles.iconWrap}>
-              <MaterialIcons name="folder" size={22} color={Colors.primary} />
-            </View>
-            <Text style={styles.menuLabel}>Manage Categories</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={Colors.textMuted} />
-        </PressableScale>
+      <Card style={styles.profileCard}>
+        <View style={[styles.avatar, { backgroundColor: colors.accentMuted }]}>
+          <MaterialIcons name="person" size={32} color={colors.accent} />
+        </View>
+        <View style={styles.profileText}>
+          <Text variant="title3" numberOfLines={1}>
+            {user?.username || 'Your account'}
+          </Text>
+          <Text variant="bodySm" tone="textSecondary" numberOfLines={1}>
+            {user?.email || '-'}
+          </Text>
+        </View>
+      </Card>
 
-        <View style={styles.divider} />
+      <Text variant="overline" tone="textTertiary" style={styles.sectionTitle}>
+        Appearance
+      </Text>
+      <Card style={styles.appearanceCard}>
+        <SegmentedControl
+          options={THEME_OPTIONS}
+          value={preference}
+          onChange={setPreference}
+          accessibilityLabel="Theme preference"
+        />
+        <Text variant="caption" tone="textTertiary" style={styles.appearanceHint}>
+          {preference === 'system'
+            ? 'Following your device appearance.'
+            : `Always using the ${preference} theme.`}
+        </Text>
+      </Card>
 
-        <PressableScale style={styles.menuRow} onPress={() => router.push('/(tabs)/profile/info')}>
-          <View style={styles.menuLeft}>
-            <View style={styles.iconWrap}>
-              <MaterialIcons name="person" size={22} color={Colors.primary} />
-            </View>
-            <Text style={styles.menuLabel}>Personal Info</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={Colors.textMuted} />
-        </PressableScale>
+      <Text variant="overline" tone="textTertiary" style={styles.sectionTitle}>
+        Manage
+      </Text>
+      <Card padding={0}>
+        <MenuRow
+          icon="folder"
+          label="Categories"
+          onPress={() => router.push('/(tabs)/profile/categories')}
+        />
+        <MenuRow
+          icon="person"
+          label="Personal info"
+          onPress={() => router.push('/(tabs)/profile/info')}
+        />
+        <MenuRow
+          icon="mail"
+          label="Contact us"
+          onPress={() => router.push('/(tabs)/profile/contact')}
+          last
+        />
+      </Card>
 
-        <View style={styles.divider} />
+      <Button
+        label="Log out"
+        variant="destructive"
+        onPress={() => void handleLogout()}
+        style={styles.logout}
+        leftIcon={<MaterialIcons name="logout" size={20} color={colors.danger} />}
+      />
 
-        <PressableScale style={styles.menuRow} onPress={() => router.push('/(tabs)/profile/contact')}>
-          <View style={styles.menuLeft}>
-            <View style={styles.iconWrap}>
-              <MaterialIcons name="mail" size={22} color={Colors.primary} />
-            </View>
-            <Text style={styles.menuLabel}>Contact Us</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={Colors.textMuted} />
-        </PressableScale>
-      </CosmicCard>
-
-      <PressableScale style={styles.logoutBtn} onPress={() => { logout(); router.replace('/'); }}>
-        <MaterialIcons name="logout" size={20} color={Colors.error} />
-        <Text style={styles.logoutText}>  Logout</Text>
-      </PressableScale>
-    </View>
+      <Text variant="caption" tone="textTertiary" style={styles.version}>
+        Cosmic Link
+      </Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  header: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
+  container: { flex: 1 },
+  content: {
+    paddingHorizontal: spacing[4],
+    paddingBottom: spacing[10],
   },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    marginTop: spacing[4],
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileText: {
+    flex: 1,
+    gap: 2,
+  },
+  sectionTitle: {
+    marginTop: spacing[6],
+    marginBottom: spacing[2],
+  },
+  appearanceCard: {
+    gap: spacing[3],
+  },
+  appearanceHint: {
+    marginTop: spacing[2],
+  },
   menuRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.md,
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
   },
-  menuLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm + 4,
-  },
-  iconWrap: {
+  menuIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuLabel: {
-    fontSize: FontSize.lg,
-    color: Colors.text,
+    flex: 1,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.md,
+  menuDivider: {
+    marginLeft: spacing[4] + 36 + spacing[3],
   },
-  logoutBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.errorBg,
-    borderWidth: 1,
-    borderColor: Colors.errorBorder,
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.xl,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
+  logout: {
+    marginTop: spacing[6],
   },
-  logoutText: { color: Colors.error, fontWeight: '700', fontSize: FontSize.lg },
+  version: {
+    textAlign: 'center',
+    marginTop: spacing[5],
+  },
 });

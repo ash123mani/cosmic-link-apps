@@ -1,77 +1,112 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors, Spacing, FontSize } from '@/constants/theme';
-import { CosmicCard } from '@/src/components/CosmicCard';
-import { PressableScale } from '@/src/components/PressableScale';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import { spacing } from '@/src/theme/tokens';
+import { Card, Divider, IconButton, Text } from '@/src/ui';
 
 export default function ProfileInfoScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { user } = useAuth();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <PressableScale style={styles.backBtn} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
-        </PressableScale>
-        <Text style={styles.title}>Personal Info</Text>
+        <IconButton
+          icon={<MaterialIcons name="arrow-back" size={24} color={colors.text} />}
+          accessibilityLabel="Go back"
+          variant="surface"
+          onPress={() => router.back()}
+        />
+        <Text variant="title2" style={styles.headerTitle}>
+          Personal info
+        </Text>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <CosmicCard style={{ marginHorizontal: Spacing.md }}>
-        <View style={styles.avatarCircle}>
-          <MaterialIcons name="person" size={36} color={Colors.primary} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={[styles.avatar, { backgroundColor: colors.accentMuted }]}>
+          <MaterialIcons name="person" size={36} color={colors.accent} />
         </View>
-        <Text style={styles.name}>{user?.name || '-'}</Text>
-        <View style={styles.divider} />
-        <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{user?.email || '-'}</Text>
-      </CosmicCard>
+        <Text variant="title2" style={styles.name}>
+          {user?.username || '-'}
+        </Text>
+
+        <Card padding={0} style={styles.card}>
+          <View style={styles.fieldRow}>
+            <Text variant="label" tone="textTertiary">
+              Username
+            </Text>
+            <Text variant="body" numberOfLines={1}>
+              {user?.username || '-'}
+            </Text>
+          </View>
+          <Divider />
+          <View style={styles.fieldRow}>
+            <Text variant="label" tone="textTertiary">
+              Email
+            </Text>
+            <Text variant="body" numberOfLines={1}>
+              {user?.email || '-'}
+            </Text>
+          </View>
+        </Card>
+
+        <Text variant="caption" tone="textTertiary" style={styles.hint}>
+          Profile editing is on the way. Reach out via Contact us if you need to update your
+          account details.
+        </Text>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[3],
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  headerTitle: {
+    flex: 1,
   },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text, flex: 1 },
-  avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.primaryLight,
+  headerSpacer: {
+    width: 44,
+  },
+  content: {
+    padding: spacing[4],
+    paddingBottom: spacing[10],
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: Spacing.md,
+    marginTop: spacing[2],
   },
   name: {
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    color: Colors.text,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginTop: spacing[3],
+    marginBottom: spacing[5],
   },
-  label: { fontSize: FontSize.xs, color: Colors.textMuted, marginBottom: Spacing.xs },
-  value: { fontSize: FontSize.lg, color: Colors.text, fontWeight: '600', marginBottom: Spacing.md },
-  divider: { height: 1, backgroundColor: Colors.border, marginBottom: Spacing.md },
+  card: {
+    marginTop: spacing[2],
+  },
+  fieldRow: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: 4,
+  },
+  hint: {
+    marginTop: spacing[4],
+    lineHeight: 18,
+  },
 });

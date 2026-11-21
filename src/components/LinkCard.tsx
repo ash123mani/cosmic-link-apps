@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Share, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -55,10 +55,17 @@ export function LinkCard({ link, onDelete, index = 0 }: Props) {
     >
       <CosmicCard style={{ marginHorizontal: 16, marginVertical: 6 }}>
         <PressableScale onPress={handleOpen}>
-          <Text style={styles.title} numberOfLines={2}>{link.title}</Text>
-          <Text style={styles.url} numberOfLines={1}>{link.linkUrl}</Text>
-          {link.description ? <Text style={styles.description} numberOfLines={2}>{link.description}</Text> : null}
-          {link.siteName ? <Text style={styles.siteName}>{link.siteName}</Text> : null}
+          <View style={styles.bodyRow}>
+            {link.imageUrl ? (
+              <Image source={{ uri: link.imageUrl }} style={styles.thumbnail} />
+            ) : null}
+            <View style={styles.bodyContent}>
+              <Text style={styles.title} numberOfLines={2}>{link.title}</Text>
+              <Text style={styles.url} numberOfLines={1}>{link.linkUrl}</Text>
+              {link.description ? <Text style={styles.description} numberOfLines={2}>{link.description}</Text> : null}
+              {link.siteName ? <Text style={styles.siteName}>{link.siteName}</Text> : null}
+            </View>
+          </View>
         </PressableScale>
         <View style={styles.actions}>
           <PressableScale style={styles.actionBtn} onPress={handleOpen}>
@@ -84,6 +91,19 @@ export function LinkCard({ link, onDelete, index = 0 }: Props) {
 }
 
 const styles = StyleSheet.create({
+  bodyRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  thumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: Colors.bgLight,
+  },
+  bodyContent: {
+    flex: 1,
+  },
   title: {
     fontSize: FontSize.lg,
     fontWeight: '600',

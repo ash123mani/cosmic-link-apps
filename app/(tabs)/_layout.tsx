@@ -2,11 +2,15 @@ import { Tabs, Redirect } from 'expo-router';
 import React from 'react';
 import { HapticTab } from '@/components/haptic-tab';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
 import { useAuth } from '@/src/context/AuthContext';
+import { useUnseenCountQuery } from '@/src/data/shares';
+import { useTheme } from '@/src/theme/ThemeProvider';
 
 export default function TabLayout() {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const unseenCount = useUnseenCountQuery({ enabled: !!user });
+  const sharedBadge = (unseenCount.data ?? 0) > 0 ? unseenCount.data : undefined;
 
   if (!user) {
     return <Redirect href="/" />;
@@ -15,21 +19,42 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.text,
-        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          backgroundColor: Colors.bg,
-          borderTopColor: Colors.border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
         },
-      }}>
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        sceneStyle: { backgroundColor: colors.bg },
+      }}
+    >
       <Tabs.Screen
         name="links"
         options={{
-          title: 'Links',
-          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="link" color={color} />,
+          title: 'Library',
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="bookmarks" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="shared"
+        options={{
+          title: 'Shared',
+          tabBarBadge: sharedBadge,
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="inbox" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="search" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -43,7 +68,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="person" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="person" color={color} />,
         }}
       />
     </Tabs>

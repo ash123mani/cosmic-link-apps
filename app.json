@@ -45,6 +45,13 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
@@ -56,7 +63,7 @@
           }
         }
       ],
-      "expo-secure-store"
+      "./plugins/withShareIntent"
     ],
     "experiments": {
       "typedRoutes": true,

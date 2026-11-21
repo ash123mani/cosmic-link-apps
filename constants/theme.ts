@@ -1,25 +1,35 @@
+/**
+ * Legacy theme shim.
+ *
+ * The canonical design tokens now live in `src/theme`. This file is kept so
+ * existing screens keep working while they are migrated to `useTheme()` and
+ * the new components in `src/ui`. Values mirror the dark-first palette.
+ */
+import { palette } from '@/src/theme/tokens';
+import { darkColors } from '@/src/theme/themes';
+
 export const Colors = {
-  bg: '#FFFFFF',
-  bgLight: '#F2F2F7',
-  bgCard: '#FFFFFF',
-  primary: '#1C1C1E',
-  primaryGlow: 'rgba(0,0,0,0.06)',
-  primaryLight: 'rgba(0,0,0,0.04)',
-  blue: '#1C1C1E',
-  blueGlow: 'rgba(0,0,0,0.06)',
-  pink: '#1C1C1E',
-  pinkGlow: 'rgba(0,0,0,0.06)',
-  white: '#FFFFFF',
-  text: '#1C1C1E',
-  textSecondary: 'rgba(28,28,30,0.6)',
-  textMuted: 'rgba(28,28,30,0.3)',
-  border: 'rgba(60,60,67,0.12)',
-  borderActive: 'rgba(60,60,67,0.25)',
-  error: '#FF3B30',
-  errorBg: 'rgba(255,59,48,0.08)',
-  errorBorder: 'rgba(255,59,48,0.2)',
-  success: '#34C759',
-  overlay: 'rgba(0,0,0,0.3)',
+  bg: darkColors.bg,
+  bgLight: darkColors.surfaceElevated,
+  bgCard: darkColors.surface,
+  primary: darkColors.accent,
+  primaryGlow: darkColors.accentMuted,
+  primaryLight: darkColors.accentMuted,
+  blue: darkColors.accent,
+  blueGlow: darkColors.accentMuted,
+  pink: palette.violet400,
+  pinkGlow: darkColors.accentMuted,
+  white: palette.white,
+  text: darkColors.text,
+  textSecondary: darkColors.textSecondary,
+  textMuted: darkColors.textTertiary,
+  border: darkColors.border,
+  borderActive: darkColors.borderStrong,
+  error: darkColors.danger,
+  errorBg: darkColors.dangerMuted,
+  errorBorder: 'rgba(251, 113, 133, 0.28)',
+  success: darkColors.success,
+  overlay: darkColors.overlay,
 };
 
 export const FontFamily = 'Poppins_400Regular';

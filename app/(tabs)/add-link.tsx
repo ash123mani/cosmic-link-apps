@@ -1,408 +1,452 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
-import { Colors, BorderRadius, Spacing, FontSize, FontFamily } from '@/constants/theme';
-import { PressableScale } from '@/src/components/PressableScale';
-import { AddCategoryModal } from '@/src/components/AddCategoryModal';
-import { LinkMetaPreview } from '@/src/components/LinkMetaPreview';
+import { useAddLinkMutation, useLinkMetaMutation } from '@/src/data/links';
+import { useTheme } from '@/src/theme/ThemeProvider';
+import { radius, spacing } from '@/src/theme/tokens';
+import type { Category, LinkMeta } from '@/src/types';
+import {
+  Button,
+  Chip,
+  Field,
+  IconButton,
+  Input,
+  Sheet,
+  Spinner,
+  Text,
+  useToast,
+} from '@/src/ui';
 
-interface Category {
-  name: string;
-  id: string;
+type MetaState = 'idle' | 'fetching' | 'done' | 'error';
+
+function normalizeUrl(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(withScheme);
+    if (!parsed.hostname.includes('.')) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
 }
 
-export default function AddLinkScreen() {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Request timed out')), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { user, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const { url: initialUrl } = useLocalSearchParams<{ url?: string }>();
 
-  const [step, setStep] = useState(1);
+  const addLink = useAddLinkMutation();
+  const linkMeta = useLinkMetaMutation();
+
   const [url, setUrl] = useState('');
-  const [meta, setMeta] = useState<any>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [meta, setMeta] = useState<LinkMeta | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(false);
-  const [addCatVisible, setAddCatVisible] = useState(false);
+  const [metaState, setMetaState] = useState<MetaState>('idle');
+  const [urlError, setUrlError] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+
+  const [newCategoryVisible, setNewCategoryVisible] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryError, setNewCategoryError] = useState<string | undefined>();
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   const hasAutoFetched = useRef(false);
 
-  // Reset and auto-fetch when a new share intent arrives
-  useEffect(() => {
-    if (!initialUrl) return;
-    hasAutoFetched.current = false;
-    setStep(1);
-    setUrl(initialUrl);
-    setMeta(null);
-    setTitle('');
-    setDescription('');
-    setCategory(null);
-    setFetching(false);
-    setLoading(false);
-  }, [initialUrl]);
-
-  // Auto-fetch metadata once after share intent populates the URL
-  useEffect(() => {
-    if (!initialUrl || !url || step !== 1 || hasAutoFetched.current) return;
-    hasAutoFetched.current = true;
-    const currentUrl = url;
-    (async () => {
-      setFetching(true);
-      try {
-        const res = await api<{ success: boolean; meta: any }>('/api/v1/link/meta', {
-          method: 'POST',
-          body: { linkUrl: currentUrl },
-        });
-        const m = res.meta;
-        setMeta(m || null);
-        setTitle(m?.title || '');
-        setDescription(m?.description || '');
-      } catch {
-        // Silent — user fills details manually in step 2
-      } finally {
-        setFetching(false);
-        setStep(2);
-      }
-    })();
-  }, [initialUrl, url, step]);
-
-  // Pick first category when user data loads or after reset
   useEffect(() => {
     if (user?.categories?.length && !category) {
       setCategory(user.categories[0]);
     }
   }, [user?.categories, category]);
 
-  const handleContinue = async () => {
-    if (!url.trim()) {
-      Alert.alert('Info', 'Please enter a URL');
-      return;
-    }
-    setFetching(true);
-    const currentUrl = url.trim();
-    try {
-      const res = await api<{ success: boolean; meta: any }>('/api/v1/link/meta', {
-        method: 'POST',
-        body: { linkUrl: currentUrl },
-      });
-      const m = res.meta;
-      setMeta(m || null);
-      setTitle(m?.title || '');
-      setDescription(m?.description || '');
-    } catch {
-      // Silent — user fills details manually in step 2
-    } finally {
-      setFetching(false);
-      setStep(2);
-    }
-  };
+  const fetchMeta = useCallback(
+    async (rawUrl: string) => {
+      const normalized = normalizeUrl(rawUrl);
+      if (!normalized) {
+        setUrlError('Enter a valid link, for example https://example.com');
+        setMetaState('error');
+        return;
+      }
+      setUrlError(undefined);
+      setMetaState('fetching');
+      try {
+        const result = await withTimeout(linkMeta.mutateAsync(normalized), 10_000);
+        setMeta(result ?? null);
+        if (result?.title) setTitle(result.title);
+        if (result?.description) setDescription(result.description);
+        setMetaState('done');
+      } catch {
+        setMeta(null);
+        setMetaState('error');
+      }
+    },
+    [linkMeta],
+  );
+
+  useEffect(() => {
+    if (!initialUrl) return;
+    hasAutoFetched.current = false;
+    setUrl(initialUrl);
+    setTitle('');
+    setDescription('');
+    setMeta(null);
+    setCategory(user?.categories?.[0] ?? null);
+    setMetaState('idle');
+    setUrlError(undefined);
+  }, [initialUrl, user?.categories]);
+
+  useEffect(() => {
+    if (!initialUrl || hasAutoFetched.current) return;
+    hasAutoFetched.current = true;
+    void fetchMeta(initialUrl);
+  }, [initialUrl, fetchMeta]);
 
   const handleSave = async () => {
-    if (!title.trim() || !category) {
-      Alert.alert('Error', 'Please fill in the title and select a category');
+    const normalized = normalizeUrl(url);
+    if (!normalized) {
+      setUrlError('Enter a valid link, for example https://example.com');
       return;
     }
-    setLoading(true);
+    if (!title.trim()) {
+      showToast({ message: 'Add a title before saving', tone: 'danger' });
+      return;
+    }
+    if (!category) {
+      showToast({ message: 'Choose a category before saving', tone: 'danger' });
+      return;
+    }
+
+    setSaving(true);
     try {
-      await api<{ success: boolean }>('/api/v1/link', {
-        method: 'POST',
-        body: {
-          linkUrl: url.trim(),
-          title: title.trim(),
-          description: description.trim(),
-          category,
-          imageUrl: meta?.imageUrl,
-          siteName: meta?.siteName,
-        },
-        auth: true,
+      await addLink.mutateAsync({
+        linkUrl: normalized,
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        imageUrl: meta?.imageUrl,
+        siteName: meta?.siteName,
       });
-      router.replace(`/(tabs)/links?categoryId=${category.id}`);
+      showToast({ message: 'Link saved', tone: 'success' });
+      router.replace({ pathname: '/(tabs)/links', params: { categoryId: category.id } });
     } catch {
-      Alert.alert('Error', 'Failed to save link');
+      showToast({ message: 'Failed to save link', tone: 'danger' });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleAddCategory = async (name: string) => {
-    await api<{ success: boolean; user: any }>('/api/v1/user/category', {
-      method: 'PUT',
-      body: { name },
-      auth: true,
-    });
-    await refreshUser();
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (name.length < 3) {
+      setNewCategoryError('Category names need at least 3 characters');
+      return;
+    }
+    setCreatingCategory(true);
+    setNewCategoryError(undefined);
+    try {
+      const res = await api<{ success: boolean; user: { categories: Category[] } }>(
+        '/api/v1/user/category',
+        { method: 'PUT', body: { name }, auth: true },
+      );
+      const created = res.user.categories[res.user.categories.length - 1];
+      await refreshUser();
+      if (created) setCategory(created);
+      setNewCategoryName('');
+      setNewCategoryVisible(false);
+    } catch {
+      setNewCategoryError('Could not create that category');
+    } finally {
+      setCreatingCategory(false);
+    }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: insets.top }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
-        <PressableScale
-          onPress={() => {
-            if (step === 2) { setStep(1); return; }
-            router.back();
-          }}
-          style={styles.backBtn}
-        >
-          <MaterialIcons name={step === 2 ? 'arrow-back' : 'close'} size={24} color={Colors.text} />
-        </PressableScale>
-        <Text style={styles.title}>Add Link</Text>
-        {step === 2 && (
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepBadgeText}>Step 2 of 2</Text>
-          </View>
-        )}
+        <IconButton
+          icon={<MaterialIcons name="close" size={24} color={colors.text} />}
+          accessibilityLabel="Close"
+          variant="surface"
+          onPress={() => router.back()}
+        />
+        <Text variant="title2" style={styles.headerTitle}>
+          Save link
+        </Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {step === 1 ? (
-          <View style={styles.stepWrap}>
-            <Text style={styles.stepLabel}>Step 1</Text>
-            <Text style={styles.stepTitle}>Enter Link URL</Text>
-            <Text style={styles.stepDesc}>
-              Paste a link below or share from any app in one tap.
-            </Text>
+        <Field
+          label="Link URL"
+          required
+          error={urlError}
+          helper="Paste a link, or share one directly from another app."
+        >
+          <Input
+            value={url}
+            onChangeText={(value) => {
+              setUrl(value);
+              if (urlError) setUrlError(undefined);
+            }}
+            placeholder="https://example.com"
+            keyboardType="url"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="URL"
+            autoComplete="url"
+            returnKeyType="go"
+            onSubmitEditing={() => void fetchMeta(url)}
+          />
+        </Field>
 
-            <TextInput
-              style={styles.urlInput}
-              placeholder="https://example.com"
-              value={url}
-              onChangeText={setUrl}
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor={Colors.textMuted}
+        <View style={styles.metaAction}>
+          {metaState === 'fetching' ? (
+            <View style={styles.fetching}>
+              <Spinner />
+              <Text variant="bodySm" tone="textSecondary">
+                Fetching details…
+              </Text>
+            </View>
+          ) : (
+            <Button
+              label={metaState === 'done' ? 'Refresh details' : 'Fetch details'}
+              variant="secondary"
+              size="sm"
+              fullWidth={false}
+              onPress={() => void fetchMeta(url)}
+              leftIcon={<MaterialIcons name="auto-awesome" size={18} color={colors.text} />}
             />
+          )}
+        </View>
 
-            <PressableScale style={styles.continueBtn} onPress={handleContinue} disabled={fetching}>
-              {fetching ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <>
-                  <Text style={styles.continueBtnText}>Continue</Text>
-                  <MaterialIcons name="arrow-forward" size={20} color={Colors.white} />
-                </>
-              )}
-            </PressableScale>
+        {metaState === 'error' ? (
+          <View style={[styles.notice, { backgroundColor: colors.warningMuted }]}>
+            <MaterialIcons name="info-outline" size={18} color={colors.warning} />
+            <Text variant="bodySm" color={colors.warning} style={styles.noticeText}>
+              We couldn&apos;t fetch details automatically. You can fill them in below.
+            </Text>
+          </View>
+        ) : null}
 
-            <View style={styles.shareHint}>
-              <MaterialIcons name="ios-share" size={16} color={Colors.textMuted} />
-              <Text style={styles.shareHintText}>  Share links from any app directly here</Text>
+        {meta && (meta.imageUrl || meta.siteName) ? (
+          <View style={[styles.preview, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {meta.imageUrl ? (
+              <Image
+                source={{ uri: meta.imageUrl }}
+                style={styles.previewImage}
+                contentFit="cover"
+                transition={160}
+                accessible={false}
+              />
+            ) : null}
+            <View style={styles.previewBody}>
+              {meta.siteName ? (
+                <Text variant="overline" tone="accent" numberOfLines={1}>
+                  {meta.siteName}
+                </Text>
+              ) : null}
+              <Text variant="bodySm" tone="textSecondary" numberOfLines={2}>
+                {meta.title || meta.description || 'Details fetched'}
+              </Text>
             </View>
           </View>
-        ) : (
-          <View style={styles.stepWrap}>
-            <Text style={styles.stepLabel}>Step 2</Text>
-            <Text style={styles.stepTitle}>Review & Save</Text>
-            <Text style={styles.stepDesc}>
-              Edit the details and save to a category.
-            </Text>
+        ) : null}
 
-            {meta && <LinkMetaPreview meta={meta} />}
+        <Field label="Title" required>
+          <Input
+            value={title}
+            onChangeText={setTitle}
+            placeholder="What is this link about?"
+            textContentType="none"
+          />
+        </Field>
 
-            <Text style={styles.fieldLabel}>Title</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Link title"
-              value={title}
-              onChangeText={setTitle}
-              placeholderTextColor={Colors.textMuted}
+        <Field label="Description" helper="Optional — add a note for your future self.">
+          <Input
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add a short description"
+            multiline
+          />
+        </Field>
+
+        <View style={styles.categoryHeader}>
+          <Text variant="label" tone="textSecondary">
+            Category
+          </Text>
+          <Chip
+            label="New"
+            icon={<MaterialIcons name="add" size={16} color={colors.accent} />}
+            onPress={() => setNewCategoryVisible(true)}
+          />
+        </View>
+
+        <View style={styles.categoryRow}>
+          {(user?.categories ?? []).map((item) => (
+            <Chip
+              key={item.id}
+              label={item.name}
+              selected={category?.id === item.id}
+              onPress={() => setCategory(item)}
             />
+          ))}
+        </View>
 
-            <Text style={styles.fieldLabel}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Add a description (optional)"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              placeholderTextColor={Colors.textMuted}
-            />
-
-            <Text style={styles.fieldLabel}>Category</Text>
-            <View style={styles.categoryRow}>
-              {user?.categories?.map((cat: Category) => (
-                <PressableScale
-                  key={cat.id}
-                  style={[styles.categoryChip, category?.id === cat.id && styles.categoryChipActive]}
-                  onPress={() => setCategory(cat)}
-                  scaleIn={0.93}
-                >
-                  <MaterialIcons
-                    name="folder"
-                    size={14}
-                    color={category?.id === cat.id ? Colors.white : Colors.primary}
-                    style={{ marginRight: 4 }}
-                  />
-                  <Text style={[styles.categoryChipText, category?.id === cat.id && styles.categoryChipTextActive]}>
-                    {cat.name}
-                  </Text>
-                </PressableScale>
-              ))}
-              <PressableScale style={styles.addCatChip} onPress={() => setAddCatVisible(true)} scaleIn={0.9}>
-                <MaterialIcons name="add" size={20} color={Colors.primary} />
-              </PressableScale>
-            </View>
-
-            <PressableScale style={styles.saveBtn} onPress={handleSave} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <>
-                  <MaterialIcons name="bookmark" size={20} color={Colors.white} />
-                  <Text style={styles.saveBtnText}>  Save Link</Text>
-                </>
-              )}
-            </PressableScale>
-          </View>
-        )}
+        <View style={styles.saveWrap}>
+          <Button
+            label="Save link"
+            onPress={() => void handleSave()}
+            loading={saving}
+            leftIcon={<MaterialIcons name="bookmark" size={20} color={colors.onAccent} />}
+          />
+        </View>
       </ScrollView>
 
-      <AddCategoryModal
-        visible={addCatVisible}
-        onClose={() => setAddCatVisible(false)}
-        onSubmit={handleAddCategory}
-      />
-    </View>
+      <Sheet
+        visible={newCategoryVisible}
+        onClose={() => {
+          if (creatingCategory) return;
+          setNewCategoryVisible(false);
+          setNewCategoryError(undefined);
+        }}
+        title="New category"
+        scrollable={false}
+      >
+        <Field label="Category name" required error={newCategoryError}>
+          <Input
+            value={newCategoryName}
+            onChangeText={(value) => {
+              setNewCategoryName(value);
+              if (newCategoryError) setNewCategoryError(undefined);
+            }}
+            placeholder="e.g. Design inspiration"
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={() => void handleCreateCategory()}
+          />
+        </Field>
+        <Button
+          label="Create category"
+          onPress={() => void handleCreateCategory()}
+          loading={creatingCategory}
+        />
+      </Sheet>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[3],
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  headerTitle: {
+    flex: 1,
   },
-  title: { fontSize: FontSize.xxxl, fontWeight: '700', color: Colors.text, flex: 1 },
-  stepBadge: {
-    backgroundColor: Colors.bgLight,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: Spacing.xs + 2,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  headerSpacer: {
+    width: 44,
   },
-  stepBadgeText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
   body: { flex: 1 },
-  bodyContent: { padding: Spacing.md, paddingBottom: Spacing.xl },
-  stepWrap: { gap: Spacing.sm },
-  stepLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: '600',
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  bodyContent: {
+    padding: spacing[4],
+    paddingBottom: spacing[12],
   },
-  stepTitle: { fontSize: FontSize.xxl, fontWeight: '700', color: Colors.text },
-  stepDesc: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20, marginBottom: Spacing.sm },
-  urlInput: {
-    fontFamily: FontFamily,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.text,
-    backgroundColor: Colors.bgLight,
-    marginTop: Spacing.sm,
-  },
-  continueBtn: {
+  metaAction: {
+    marginTop: -6,
+    marginBottom: spacing[4],
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.primary,
-    padding: Spacing.md + 2,
-    borderRadius: BorderRadius.sm,
-    marginTop: Spacing.sm,
   },
-  continueBtnText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
-  shareHint: {
+  fetching: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.lg,
+    gap: spacing[2],
   },
-  shareHintText: { fontSize: FontSize.xs, color: Colors.textMuted },
-  fieldLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    padding: spacing[3],
+    borderRadius: radius.sm,
+    marginBottom: spacing[4],
   },
-  input: {
-    fontFamily: FontFamily,
+  noticeText: {
+    flex: 1,
+  },
+  preview: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    padding: spacing[3],
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.text,
-    backgroundColor: Colors.bgLight,
-    marginBottom: Spacing.md,
+    marginBottom: spacing[4],
   },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
+  previewImage: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.xs,
+  },
+  previewBody: {
+    flex: 1,
+    gap: 4,
+    justifyContent: 'center',
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing[3],
   },
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+    gap: spacing[2],
+    marginBottom: spacing[6],
   },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  saveWrap: {
+    marginTop: spacing[2],
   },
-  categoryChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  categoryChipText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.text },
-  categoryChipTextActive: { color: Colors.white },
-  addCatChip: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.bgLight,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    padding: Spacing.md + 2,
-    borderRadius: BorderRadius.sm,
-  },
-  saveBtnText: { color: Colors.white, fontWeight: '700', fontSize: FontSize.lg },
 });
