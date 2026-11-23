@@ -84,3 +84,43 @@ export interface ShareItem {
 }
 
 
+
+export type ManagedFolderRole = 'admin' | 'member';
+
+export interface ManagedFolderMember {
+  userId: string;
+  username?: string;
+  email?: string;
+  role: ManagedFolderRole;
+  addedBy?: string;
+  joinedAt?: string;
+}
+
+export interface ManagedFolder {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  members: ManagedFolderMember[];
+  memberCount: number;
+  linkCount?: number;
+  myRole?: ManagedFolderRole | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ManagedFolderLink {
+  id: string;
+  folderId: string;
+  linkUrl: string;
+  title: string;
+  description?: string;
+  siteName?: string;
+  imageUrl?: string;
+  createdBy: { id: string; username: string };
+  lastEditedBy?: { id: string; username?: string; at?: string };
+  canEdit?: boolean;
+  canDelete?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}

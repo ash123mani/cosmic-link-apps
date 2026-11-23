@@ -51,6 +51,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="managed"
+        options={{
+          title: 'Managed',
+          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="folder-shared" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="search"
         options={{
           title: 'Search',

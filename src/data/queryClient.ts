@@ -22,4 +22,7 @@ export const queryKeys = {
   sharesInbox: ['shares', 'inbox'] as const,
   sharesUnseenCount: ['shares', 'unseen-count'] as const,
   userSearch: (q: string) => ['users', 'search', q] as const,
+  managedFolders: ['managed-folders'] as const,
+  managedFolder: (id: string) => ['managed-folders', id] as const,
+  managedFolderLinks: (id: string) => ['managed-folders', id, 'links'] as const,
 };

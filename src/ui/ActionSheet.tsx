@@ -1,102 +1,69 @@
-import { type ComponentProps } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Modal, StyleSheet, View } from 'react-native';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { radius } from '@/src/theme/tokens';
 import { Pressable } from './Pressable';
-import { Sheet } from './Sheet';
 import { Text } from './Text';
-import { Divider } from './Divider';
 
-type IconName = ComponentProps<typeof MaterialIcons>['name'];
-
-export interface ActionSheetItem {
+export type ActionSheetAction = {
   label: string;
-  icon?: IconName;
-  destructive?: boolean;
   onPress: () => void;
-}
+  destructive?: boolean;
+  disabled?: boolean;
+};
 
-export interface ActionSheetProps {
+export type ActionSheetItem = ActionSheetAction;
+
+type Props = {
   visible: boolean;
   title?: string;
-  items: ActionSheetItem[];
   onClose: () => void;
-  cancelLabel?: string;
-}
+  actions?: ActionSheetAction[];
+  items?: ActionSheetAction[];
+};
 
-export function ActionSheet({
-  visible,
-  title,
-  items,
-  onClose,
-  cancelLabel = 'Cancel',
-}: ActionSheetProps) {
+export function ActionSheet({ visible, title, onClose, actions, items }: Props) {
   const { colors } = useTheme();
-
+  const list = actions ?? items ?? [];
   return (
-    <Sheet visible={visible} onClose={onClose} title={title} scrollable={false}>
-      <View>
-        {items.map((item, index) => (
-          <View key={item.label}>
-            {index > 0 ? <Divider /> : null}
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close action sheet">
+        <Pressable style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => {}}>
+          {title ? <Text variant="caption" tone="textSecondary" align="center" style={styles.title}>{title}</Text> : null}
+          {list.map((action) => (
             <Pressable
-              onPress={() => {
-                onClose();
-                item.onPress();
-              }}
-              haptic="selection"
+              key={action.label}
               accessibilityRole="button"
-              style={styles.row}
+              accessibilityState={{ disabled: action.disabled }}
+              disabled={action.disabled}
+              style={[styles.action, { backgroundColor: colors.surfaceElevated }, action.disabled && styles.disabled]}
+              onPress={() => {
+                if (action.disabled) return;
+                onClose();
+                action.onPress();
+              }}
             >
-              {item.icon ? (
-                <MaterialIcons
-                  name={item.icon}
-                  size={20}
-                  color={item.destructive ? colors.danger : colors.textSecondary}
-                />
-              ) : null}
               <Text
                 variant="body"
-                color={item.destructive ? colors.danger : colors.text}
-                style={styles.label}
+                color={action.disabled ? colors.textTertiary : action.destructive ? colors.danger : colors.text}
               >
-                {item.label}
+                {action.label}
               </Text>
             </Pressable>
-          </View>
-        ))}
-      </View>
-
-      <Pressable
-        onPress={onClose}
-        haptic="light"
-        accessibilityRole="button"
-        style={[styles.cancel, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
-      >
-        <Text variant="bodyStrong">{cancelLabel}</Text>
+          ))}
+          <Pressable accessibilityRole="button" style={[styles.cancel, { backgroundColor: colors.surfaceSunken }]} onPress={onClose}>
+            <Text variant="bodyStrong">Cancel</Text>
+          </Pressable>
+        </Pressable>
       </Pressable>
-    </Sheet>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    minHeight: 52,
-    paddingVertical: 12,
-  },
-  label: {
-    flex: 1,
-  },
-  cancel: {
-    marginTop: 16,
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    borderWidth: 1,
-  },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: { padding: 16, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1, gap: 8 },
+  title: { paddingVertical: 8 },
+  action: { minHeight: 48, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  disabled: { opacity: 0.45 },
+  cancel: { minHeight: 48, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
 });
