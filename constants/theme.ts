@@ -17,7 +17,7 @@ export const Colors = {
   primaryLight: darkColors.accentMuted,
   blue: darkColors.accent,
   blueGlow: darkColors.accentMuted,
-  pink: palette.violet400,
+  pink: darkColors.accent,
   pinkGlow: darkColors.accentMuted,
   white: palette.white,
   text: darkColors.text,

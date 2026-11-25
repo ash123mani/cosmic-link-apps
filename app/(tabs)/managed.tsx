@@ -2,16 +2,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Button } from '@/src/ui/Button';
-import { EmptyState } from '@/src/ui/EmptyState';
-import { ErrorState } from '@/src/ui/ErrorState';
-import { Field } from '@/src/ui/Field';
-import { Pressable } from '@/src/ui/Pressable';
-import { SearchBar } from '@/src/ui/SearchBar';
-import { Sheet } from '@/src/ui/Sheet';
-import { Spinner } from '@/src/ui/Spinner';
-import { Text } from '@/src/ui/Text';
-import { useToast } from '@/src/ui/Toast';
+import { Button, EmptyState, ErrorState, Field, Input, Pressable, SearchBar, Sheet, Spinner, Text, useToast } from '@/src/ui';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { radius, spacing } from '@/src/theme/tokens';
 import { useCreateManagedFolderMutation, useManagedFoldersQuery } from '@/src/data/managedFolders';
@@ -21,7 +12,7 @@ import type { ManagedFolder, UserSummary } from '@/src/types';
 function FolderCard({ folder, onPress }: { folder: ManagedFolder; onPress: () => void }) {
   const { colors } = useTheme();
   return (
-    <Pressable accessibilityRole="button" style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={onPress}>
+    <Pressable accessibilityRole="button" style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]} onPress={onPress}>
       <View style={styles.cardMain}>
         <View style={styles.cardHead}>
           <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>{folder.name}</Text>
@@ -30,7 +21,7 @@ function FolderCard({ folder, onPress }: { folder: ManagedFolder; onPress: () =>
         {folder.description ? <Text variant="bodySm" tone="textSecondary" numberOfLines={2} style={styles.meta}>{folder.description}</Text> : null}
         <Text variant="caption" tone="textTertiary" style={styles.meta}>{folder.memberCount} members · {folder.linkCount} links</Text>
       </View>
-      <MaterialIcons name="chevron-right" size={20} color={colors.textTertiary} />
+      <MaterialIcons name="chevron-right" size={20} color={colors.textSecondary} />
     </Pressable>
   );
 }
@@ -84,11 +75,11 @@ export default function ManagedFoldersScreen() {
   return (
     <View style={[styles.page, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text variant="headline">Managed Folders</Text>
-          <Text variant="bodySm" tone="textSecondary" style={{ marginTop: 4 }}>Collaborate on links with role-based access.</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="overline" tone="textTertiary">Workspace</Text>
+          <Text variant="title1">Managed</Text>
         </View>
-        <Button label="New" onPress={() => setShowCreate(true)} size="sm" fullWidth={false} />
+        <Button label="New folder" onPress={() => setShowCreate(true)} size="sm" fullWidth={false} />
       </View>
 
       <FlatList
@@ -102,10 +93,10 @@ export default function ManagedFoldersScreen() {
 
       <Sheet visible={showCreate} onClose={closeCreate} title="New managed folder">
         <Field label="Folder name" required>
-          <SearchBarLikeInput value={name} onChangeText={setName} placeholder="e.g. Design inspiration" />
+          <Input value={name} onChangeText={setName} placeholder="e.g. Design inspiration" />
         </Field>
         <Field label="Description">
-          <SearchBarLikeInput value={description} onChangeText={setDescription} placeholder="Optional description" />
+          <Input value={description} onChangeText={setDescription} placeholder="Optional description" />
         </Field>
         <Field label="Add members" required helper="Search and select at least one member. You'll be the initial admin.">
           <SearchBar value={memberQuery} onChangeText={setMemberQuery} placeholder="Search by username or email" />
@@ -143,39 +134,22 @@ export default function ManagedFoldersScreen() {
   );
 }
 
-function SearchBarLikeInput({ value, onChangeText, placeholder }: { value: string; onChangeText: (v: string) => void; placeholder?: string }) {
-  const { colors } = useTheme();
-  const { TextInput } = require('react-native');
-  return (
-    <View style={[styles.inputWrap, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textTertiary}
-        style={[styles.input, { color: colors.text }]}
-        autoCapitalize="none"
-      />
-    </View>
-  );
-}
+
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', gap: spacing['3'], alignItems: 'flex-start', paddingHorizontal: spacing['4'], paddingTop: spacing['4'], paddingBottom: spacing['2'] },
-  list: { padding: spacing['4'], gap: spacing['3'], paddingBottom: 40 },
-  listEmpty: { flexGrow: 1, padding: spacing['4'] },
-  card: { flexDirection: 'row', alignItems: 'center', gap: spacing['3'], borderWidth: 1, borderRadius: radius.md, padding: spacing['4'], minHeight: 72 },
+  header: { flexDirection: 'row', gap: 12, alignItems: 'center', paddingHorizontal: 20, paddingTop: spacing[3], paddingBottom: spacing[2] },
+  list: { padding: 20, gap: 12, paddingBottom: 40 },
+  listEmpty: { flexGrow: 1, padding: 20 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radius.md, padding: 16, minHeight: 72 },
   cardMain: { flex: 1 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rolePill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   roleText: { textTransform: 'capitalize', fontWeight: '700' },
   meta: { marginTop: 4 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing['3'] },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
-  searchResults: { gap: spacing['2'], marginBottom: spacing['3'] },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderRadius: radius.sm },
-  inputWrap: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12 },
-  input: { minHeight: 48, fontSize: 16 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing[3] },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1, minHeight: 44 },
+  searchResults: { gap: spacing[2], marginBottom: spacing[3] },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 1, borderRadius: radius.sm, minHeight: 52 },
 });

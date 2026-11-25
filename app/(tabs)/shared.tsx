@@ -50,21 +50,27 @@ export default function SharedScreen() {
     const title = item.title || hostOf(item.linkUrl) || 'Shared link';
     const unseen = item.status === 'unseen';
     return (
-      <Pressable onPress={() => void handlePress(item)} haptic="light" accessibilityRole="button" style={[styles.card, { backgroundColor: colors.surface, borderColor: unseen ? colors.accent : colors.border }]}>
-        <View style={styles.cardHeader}>
-          <Text variant="caption" tone={unseen ? 'accent' : 'textTertiary'}>{item.sender?.username ? `@${item.sender.username}` : 'Someone'} shared</Text>
-          <View style={styles.metaRight}>
-            {unseen ? <View style={[styles.dot, { backgroundColor: colors.accent }]} /> : null}
-            <Text variant="caption" tone="textTertiary">{formatTime(item.createdAt)}</Text>
+      <Pressable onPress={() => void handlePress(item)} haptic="light" accessibilityRole="button" style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
+        {unseen ? <View style={[styles.unseenBar, { backgroundColor: colors.accent }]} /> : null}
+        <View style={styles.cardBody}>
+          <View style={styles.cardHeader}>
+            <Text variant="label" tone={unseen ? 'accent' : 'textSecondary'}>{item.sender?.username ? `@${item.sender.username}` : 'Someone'}</Text>
+            <View style={styles.metaRight}>
+              {unseen ? <View style={[styles.newBadge, { backgroundColor: colors.accentMuted }]}><Text variant="caption" tone="accent">New</Text></View> : null}
+              <Text variant="caption" tone="textTertiary">{formatTime(item.createdAt)}</Text>
+            </View>
           </View>
-        </View>
-        <Text variant="bodyStrong" numberOfLines={2}>{title}</Text>
-        {item.description ? <Text variant="bodySm" tone="textSecondary" numberOfLines={2}>{item.description}</Text> : <Text variant="bodySm" tone="textTertiary" numberOfLines={1}>{hostOf(item.linkUrl)}</Text>}
-        {item.message ? <View style={[styles.note, { backgroundColor: colors.surfaceElevated }]}><Text variant="caption" tone="textSecondary" numberOfLines={3}>“{item.message}”</Text></View> : null}
-        <View style={styles.actionsRow}>
-          <Pressable onPress={(e: any) => { e?.stopPropagation?.(); setMoveTarget(item); }} haptic="light" style={[styles.moveBtn, { borderColor: colors.border }]}>
-            <Text variant="caption" tone="textSecondary">Move to category</Text>
-          </Pressable>
+          <Text variant="bodyStrong" numberOfLines={2}>{title}</Text>
+          <Text variant="bodySm" tone="textSecondary" numberOfLines={2}>{item.description || hostOf(item.linkUrl)}</Text>
+          {item.message ? <View style={[styles.note, { backgroundColor: colors.surfaceSunken, borderColor: colors.border }]}><Text variant="caption" tone="textSecondary" numberOfLines={3}>“{item.message}”</Text></View> : null}
+          <View style={styles.actionsRow}>
+            <Pressable onPress={() => void handlePress(item)} haptic="light" style={[styles.actionBtn, { borderColor: colors.borderStrong }]} accessibilityRole="button">
+              <Text variant="label" tone="accent">Open</Text>
+            </Pressable>
+            <Pressable onPress={(e: any) => { e?.stopPropagation?.(); setMoveTarget(item); }} haptic="light" style={[styles.actionBtn, { borderColor: colors.borderStrong }]} accessibilityRole="button">
+              <Text variant="label" tone="textSecondary">Move</Text>
+            </Pressable>
+          </View>
         </View>
       </Pressable>
     );
@@ -90,8 +96,15 @@ export default function SharedScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing[2] }]}>
       <View style={styles.header}>
-        <Text variant="title1">Shared</Text>
-        {(inbox.data?.unseenCount ?? 0) > 0 ? <Text variant="caption" tone="accent">{inbox.data?.unseenCount} new</Text> : null}
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="overline" tone="textTertiary">Inbox</Text>
+          <Text variant="title1">Shared</Text>
+        </View>
+        {(inbox.data?.unseenCount ?? 0) > 0 ? (
+          <Pressable onPress={() => markSeen.mutate({ all: true })} style={[styles.markReadBtn, { borderColor: colors.borderStrong }]} accessibilityRole="button">
+            <Text variant="label" tone="accent">Mark all read</Text>
+          </Pressable>
+        ) : null}
       </View>
       <View style={styles.content}>{renderInbox()}</View>
       <ActionSheet
@@ -113,15 +126,18 @@ export default function SharedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: spacing[4], paddingBottom: spacing[2] },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: spacing[2], gap: 12 },
+  markReadBtn: { minHeight: 44, paddingHorizontal: 12, borderWidth: 1, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1 },
-  listContent: { paddingHorizontal: spacing[4], paddingTop: spacing[2], paddingBottom: 40, gap: spacing[3] },
-  card: { borderWidth: 1, borderRadius: radius.md, padding: spacing[4], gap: spacing[2] },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  metaRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  note: { marginTop: spacing[1], paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.sm },
+  listContent: { paddingHorizontal: 20, paddingTop: spacing[2], paddingBottom: 40, gap: 12 },
+  card: { borderWidth: 1, borderRadius: radius.md, overflow: 'hidden', flexDirection: 'row' },
+  unseenBar: { width: 4 },
+  cardBody: { flex: 1, padding: 14, gap: 6 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  metaRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  newBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  note: { marginTop: 2, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.sm, borderWidth: 1 },
+  actionsRow: { marginTop: 6, flexDirection: 'row', gap: 8 },
+  actionBtn: { flex: 1, minHeight: 44, borderWidth: 1, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   skeletons: { paddingTop: spacing[2] },
-  actionsRow: { marginTop: spacing[1], flexDirection: 'row', justifyContent: 'flex-start' },
-  moveBtn: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: spacing[3], paddingVertical: spacing[2] },
 });

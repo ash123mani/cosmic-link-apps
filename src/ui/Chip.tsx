@@ -29,7 +29,7 @@ export function Chip({
       {icon ? <View style={styles.icon}>{icon}</View> : null}
       <Text
         variant="label"
-        color={selected ? colors.onAccent : colors.text}
+        color={selected ? colors.accent : colors.text}
         numberOfLines={1}
       >
         {label}
@@ -37,7 +37,7 @@ export function Chip({
       {typeof count === 'number' ? (
         <Text
           variant="caption"
-          color={selected ? colors.onAccent : colors.textTertiary}
+          color={selected ? colors.accent : colors.textSecondary}
           style={styles.count}
         >
           {count}
@@ -49,8 +49,8 @@ export function Chip({
   const baseStyle = [
     styles.base,
     {
-      backgroundColor: selected ? colors.accent : colors.surfaceElevated,
-      borderColor: selected ? colors.accent : colors.border,
+      backgroundColor: selected ? colors.accentMuted : colors.surface,
+      borderColor: selected ? colors.accent : colors.borderStrong,
     },
   ];
 
@@ -74,7 +74,7 @@ export function Chip({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: radius.full,
     borderWidth: 1,

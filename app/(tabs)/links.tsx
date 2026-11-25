@@ -194,6 +194,8 @@ export default function LibraryScreen() {
             onPress={() => router.push(`/link/${item.id}`)}
             onLongPress={() => setActionLink(item)}
             onMore={() => setActionLink(item)}
+            onOpen={() => void openLink(item)}
+            onCopy={() => void copyLink(item)}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -217,17 +219,24 @@ export default function LibraryScreen() {
     <View style={[styles.container, { paddingTop: insets.top + spacing[2] }]}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text variant="overline" tone="textTertiary">
-            Cosmic Link
-          </Text>
-          <Text variant="title1">Library</Text>
+          <Text variant="overline" tone="textTertiary">Library</Text>
+          <Text variant="title1">Your Links</Text>
         </View>
-        <IconButton
-          icon={<MaterialIcons name="search" size={22} color={colors.text} />}
-          accessibilityLabel="Search links"
-          variant="surface"
-          onPress={() => router.push('/(tabs)/search')}
-        />
+        <View style={styles.headerActions}>
+          <IconButton
+            icon={<MaterialIcons name="search" size={22} color={colors.text} />}
+            accessibilityLabel="Search links"
+            variant="surface"
+            onPress={() => router.push('/(tabs)/search')}
+          />
+          <IconButton
+            icon={<MaterialIcons name="add" size={22} color={colors.onAccent} />}
+            accessibilityLabel="Add link"
+            variant="accent"
+            onPress={() => router.push('/(tabs)/add-link')}
+            style={{ backgroundColor: colors.accent }}
+          />
+        </View>
       </View>
 
       <CategoryTabs
@@ -244,8 +253,8 @@ export default function LibraryScreen() {
         onPress={() => router.push('/(tabs)/add-link')}
         style={{
           position: 'absolute',
-          right: spacing[4],
-          bottom: insets.bottom + spacing[6],
+          right: 20,
+          bottom: insets.bottom + 20,
         }}
       />
 
@@ -309,11 +318,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: 20,
     paddingBottom: spacing[2],
+    gap: 12,
   },
   headerText: {
+    flex: 1,
     gap: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   content: { flex: 1 },
   listContent: {

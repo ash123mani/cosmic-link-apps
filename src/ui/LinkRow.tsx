@@ -13,104 +13,90 @@ export interface LinkRowProps {
   onPress?: () => void;
   onLongPress?: () => void;
   onMore?: () => void;
+  onCopy?: () => void;
+  onOpen?: () => void;
   showCategory?: boolean;
 }
 
-export function LinkRow({ link, onPress, onLongPress, onMore, showCategory = true }: LinkRowProps) {
+export function LinkRow({ link, onPress, onLongPress, onMore, onCopy, onOpen, showCategory = true }: LinkRowProps) {
   const { colors } = useTheme();
   const host = hostOf(link.linkUrl);
   const categoryName = showCategory ? link.category?.name : undefined;
+  const title = link.title || host || 'Untitled link';
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
       <Pressable
         onPress={onPress}
         onLongPress={onLongPress}
         haptic="light"
         accessibilityRole={onPress ? 'button' : undefined}
-        accessibilityLabel={`${link.title || host}${categoryName ? `, in ${categoryName}` : ''}`}
+        accessibilityLabel={`${title}${categoryName ? `, in ${categoryName}` : ''}`}
         style={styles.main}
       >
         {link.imageUrl ? (
           <Image
             source={{ uri: link.imageUrl }}
-            style={[styles.thumb, { backgroundColor: colors.surfaceElevated }]}
+            style={[styles.thumb, { backgroundColor: colors.surfaceSunken }]}
             contentFit="cover"
             transition={160}
             accessible={false}
           />
         ) : (
-          <View style={[styles.thumb, styles.thumbFallback, { backgroundColor: colors.accentMuted }]}>
+          <View style={[styles.thumb, styles.thumbFallback, { backgroundColor: colors.accentMuted, borderColor: colors.borderStrong }]}>
             <MaterialIcons name="public" size={24} color={colors.accent} />
           </View>
         )}
 
         <View style={styles.content}>
-          <Text variant="bodyStrong" numberOfLines={2}>
-            {link.title || host || 'Untitled link'}
-          </Text>
-
-          <View style={styles.metaRow}>
-            <MaterialIcons name="link" size={13} color={colors.textTertiary} />
-            <Text
-              variant="caption"
-              tone="textTertiary"
-              numberOfLines={1}
-              style={styles.host}
-            >
-              {host}
-            </Text>
-          </View>
-
-          {categoryName ? (
-            <View style={styles.metaRow}>
-              <View style={[styles.dot, { backgroundColor: colors.accent }]} />
-              <Text variant="caption" tone="textSecondary" numberOfLines={1}>
-                {categoryName}
-              </Text>
-            </View>
-          ) : null}
+          <Text variant="bodyStrong" numberOfLines={2}>{title}</Text>
+          <Text variant="caption" tone="textSecondary" numberOfLines={1}>{host}</Text>
+          {categoryName ? <Text variant="caption" tone="textTertiary" numberOfLines={1}>{categoryName}</Text> : null}
           {link.sharedBy?.username ? (
             <View style={[styles.sharedBadge, { backgroundColor: colors.accentMuted }]}>
               <MaterialIcons name="person-outline" size={12} color={colors.accent} />
-              <Text variant="caption" tone="accent" numberOfLines={1}>
-                Shared by @{link.sharedBy.username}
-              </Text>
+              <Text variant="caption" tone="accent" numberOfLines={1}>Shared by @{link.sharedBy.username}</Text>
             </View>
           ) : null}
         </View>
       </Pressable>
 
-      {onMore ? (
-        <IconButton
-          icon={<MaterialIcons name="more-horiz" size={20} color={colors.textSecondary} />}
-          onPress={onMore}
-          accessibilityLabel={`More actions for ${link.title || host}`}
-          size={40}
-        />
-      ) : null}
+      <View style={[styles.actions, { borderTopColor: colors.border }]}>
+        <Pressable onPress={onOpen} haptic="light" accessibilityRole="button" accessibilityLabel={`Open ${title}`} style={styles.actionBtn}>
+          <MaterialIcons name="open-in-new" size={18} color={colors.accent} />
+          <Text variant="label" tone="accent">Open</Text>
+        </Pressable>
+        <Pressable onPress={onCopy} haptic="light" accessibilityRole="button" accessibilityLabel={`Copy ${title}`} style={styles.actionBtn}>
+          <MaterialIcons name="content-copy" size={18} color={colors.textSecondary} />
+          <Text variant="label" tone="textSecondary">Copy</Text>
+        </Pressable>
+        {onMore ? (
+          <IconButton
+            icon={<MaterialIcons name="more-horiz" size={20} color={colors.textSecondary} />}
+            onPress={onMore}
+            accessibilityLabel={`More actions for ${title}`}
+            size={44}
+            style={styles.moreBtn}
+          />
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginVertical: 5,
-    paddingRight: 8,
+    marginHorizontal: 20,
+    marginVertical: 6,
+    overflow: 'hidden',
   },
   main: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    padding: 12,
+    padding: 14,
   },
   thumb: {
     width: 56,
@@ -120,23 +106,11 @@ const styles = StyleSheet.create({
   thumbFallback: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   content: {
     flex: 1,
-    gap: 4,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  host: {
-    flexShrink: 1,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    gap: 3,
   },
   sharedBadge: {
     alignSelf: 'flex-start',
@@ -146,6 +120,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    marginTop: 2,
+    marginTop: 4,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  actionBtn: {
+    flex: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  moreBtn: {
+    flex: 1,
   },
 });

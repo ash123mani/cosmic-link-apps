@@ -2,7 +2,7 @@ import type { TextStyle } from 'react-native';
 
 const DISPLAY = 'Poppins_700Bold';
 const HEADING = 'Poppins_600SemiBold';
-const SYSTEM = undefined;
+const BODY = 'Poppins_400Regular';
 
 export interface TypeStyle {
   fontFamily?: string;
@@ -48,38 +48,38 @@ export const typography = {
     fontWeight: '600',
   },
   body: {
-    fontFamily: SYSTEM,
+    fontFamily: BODY,
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '400',
   },
   bodyStrong: {
-    fontFamily: SYSTEM,
+    fontFamily: HEADING,
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '600',
   },
   bodySm: {
-    fontFamily: SYSTEM,
+    fontFamily: BODY,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '400',
   },
   label: {
-    fontFamily: SYSTEM,
+    fontFamily: HEADING,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
     letterSpacing: 0.2,
   },
   caption: {
-    fontFamily: SYSTEM,
+    fontFamily: BODY,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   overline: {
-    fontFamily: SYSTEM,
+    fontFamily: HEADING,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '600',

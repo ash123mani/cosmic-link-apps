@@ -46,9 +46,9 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search', onClear
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.sm, paddingHorizontal: 12, minHeight: 48, borderWidth: 1 },
+  wrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.control, paddingHorizontal: 12, minHeight: 48, borderWidth: 1 },
   inputWrap: { flex: 1 },
   inputContainer: { marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', minHeight: 44 },
   input: { paddingHorizontal: 0 },
-  clear: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
+  clear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 });

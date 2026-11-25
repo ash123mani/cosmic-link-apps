@@ -10,7 +10,8 @@ export default function TabLayout() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const unseenCount = useUnseenCountQuery({ enabled: !!user });
-  const sharedBadge = (unseenCount.data ?? 0) > 0 ? unseenCount.data : undefined;
+  const unseen = unseenCount.data ?? 0;
+  const sharedBadge = unseen > 0 ? (unseen > 99 ? '99+' : String(unseen)) : undefined;
 
   if (!user) {
     return <Redirect href="/" />;
@@ -20,17 +21,25 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarInactiveTintColor: colors.textSecondary,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          height: 64,
+          paddingTop: 4,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+        },
+        tabBarBadgeStyle: {
+          backgroundColor: colors.danger,
+          color: colors.onAccent,
+          fontSize: 10,
+          fontWeight: '700',
         },
         sceneStyle: { backgroundColor: colors.bg },
       }}
@@ -60,8 +69,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
-          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="search" color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -38,14 +38,14 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     ? colors.danger
     : focused
       ? colors.focusRing
-      : colors.border;
+      : colors.borderStrong;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: colors.surfaceElevated,
+          backgroundColor: colors.surface,
           borderColor,
         },
         multiline && styles.multiline,
@@ -80,11 +80,11 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 50,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: radius.sm,
+    borderRadius: radius.control,
     paddingHorizontal: 14,
   },
   multiline: {

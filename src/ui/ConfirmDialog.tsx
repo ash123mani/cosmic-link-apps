@@ -46,17 +46,13 @@ export function ConfirmDialog({
             </Text>
           ) : null}
           <View style={styles.actions}>
-            <View style={styles.action}>
-              <Button label={cancelLabel} variant="secondary" onPress={onCancel} disabled={loading} />
-            </View>
-            <View style={styles.action}>
-              <Button
-                label={confirmLabel}
-                variant={destructive ? 'destructive' : 'primary'}
-                onPress={onConfirm}
-                loading={loading}
-              />
-            </View>
+            <Button label={cancelLabel} variant="secondary" onPress={onCancel} disabled={loading} />
+            <Button
+              label={confirmLabel}
+              variant={destructive ? 'destructive' : 'primary'}
+              onPress={onConfirm}
+              loading={loading}
+            />
           </View>
         </View>
       </View>
@@ -83,11 +79,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   actions: {
-    flexDirection: 'row',
     gap: 10,
     marginTop: 22,
-  },
-  action: {
-    flex: 1,
   },
 });

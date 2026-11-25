@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTheme } from '@/src/theme/ThemeProvider';
-import { radius, opacity } from '@/src/theme/tokens';
+import { opacity, radius } from '@/src/theme/tokens';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
 
@@ -29,8 +29,8 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const HEIGHT: Record<ButtonSize, number> = { sm: 40, md: 48, lg: 54 };
-const PADDING: Record<ButtonSize, number> = { sm: 14, md: 18, lg: 22 };
+const HEIGHT: Record<ButtonSize, number> = { sm: 44, md: 48, lg: 52 };
+const PADDING: Record<ButtonSize, number> = { sm: 14, md: 18, lg: 20 };
 
 export function Button({
   label,
@@ -51,9 +51,9 @@ export function Button({
 
   const palette = {
     primary: { bg: colors.accent, fg: colors.onAccent, border: colors.accent },
-    secondary: { bg: colors.surfaceElevated, fg: colors.text, border: colors.border },
-    ghost: { bg: 'transparent', fg: colors.text, border: 'transparent' },
-    destructive: { bg: colors.dangerMuted, fg: colors.danger, border: colors.dangerMuted },
+    secondary: { bg: colors.surface, fg: colors.text, border: colors.borderStrong },
+    ghost: { bg: 'transparent', fg: colors.accent, border: 'transparent' },
+    destructive: { bg: colors.dangerMuted, fg: colors.danger, border: 'transparent' },
   }[variant];
 
   return (
@@ -99,7 +99,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

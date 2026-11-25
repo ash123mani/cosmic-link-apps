@@ -15,6 +15,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useAddLinkMutation, useLinkMetaMutation } from '@/src/data/links';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { radius, spacing } from '@/src/theme/tokens';
+import { normalizeUrl, withTimeout } from '@/src/lib/linkUtils';
 import type { Category, LinkMeta } from '@/src/types';
 import {
   Button,
@@ -29,35 +30,6 @@ import {
 } from '@/src/ui';
 
 type MetaState = 'idle' | 'fetching' | 'done' | 'error';
-
-function normalizeUrl(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const parsed = new URL(withScheme);
-    if (!parsed.hostname.includes('.')) return null;
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Request timed out')), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error) => {
-        clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
-}
 
 export default function QuickCaptureScreen() {
   const insets = useSafeAreaInsets();

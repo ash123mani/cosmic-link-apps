@@ -62,12 +62,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 4,
-    borderRadius: radius.sm,
+    borderRadius: radius.control,
     borderWidth: 1,
   },
   segment: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.xs,

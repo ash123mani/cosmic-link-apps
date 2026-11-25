@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/src/ui/Button';
 import { Card } from '@/src/ui/Card';
@@ -9,6 +10,7 @@ import { EmptyState } from '@/src/ui/EmptyState';
 import { ErrorState } from '@/src/ui/ErrorState';
 import { Field } from '@/src/ui/Field';
 import { IconButton } from '@/src/ui/IconButton';
+import { Input } from '@/src/ui/Input';
 import { Pressable } from '@/src/ui/Pressable';
 import { SearchBar } from '@/src/ui/SearchBar';
 import { SegmentedControl } from '@/src/ui/SegmentedControl';
@@ -19,6 +21,7 @@ import { useToast } from '@/src/ui/Toast';
 import { useAuth } from '@/src/context/AuthContext';
 import { useTheme } from '@/src/theme/ThemeProvider';
 import { radius, spacing } from '@/src/theme/tokens';
+import { useLinkMetaMutation } from '@/src/data/links';
 import {
   useAddManagedFolderMembersMutation,
   useCreateManagedFolderLinkMutation,
@@ -31,7 +34,8 @@ import {
   useUpdateManagedFolderMemberRoleMutation,
 } from '@/src/data/managedFolders';
 import { useUserSearchQuery } from '@/src/data/users';
-import type { ManagedFolderLink, ManagedFolderMember } from '@/src/types';
+import { normalizeUrl, withTimeout } from '@/src/lib/linkUtils';
+import type { LinkMeta, ManagedFolderLink, ManagedFolderMember } from '@/src/types';
 
 export default function ManagedFolderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,11 +54,15 @@ export default function ManagedFolderDetailScreen() {
   const createLink = useCreateManagedFolderLinkMutation(folderId);
   const updateLink = useUpdateManagedFolderLinkMutation(folderId);
   const deleteLink = useDeleteManagedFolderLinkMutation(folderId);
+  const linkMetaMutation = useLinkMetaMutation();
 
   const [tab, setTab] = useState<'links' | 'members'>('links');
   const [linkSheet, setLinkSheet] = useState(false);
   const [editing, setEditing] = useState<ManagedFolderLink | null>(null);
   const [linkForm, setLinkForm] = useState({ linkUrl: '', title: '', description: '' });
+  const [linkMeta, setLinkMeta] = useState<LinkMeta | null>(null);
+  const [metaState, setMetaState] = useState<'idle' | 'fetching' | 'done' | 'error'>('idle');
+  const [urlError, setUrlError] = useState<string | undefined>();
   const [memberQuery, setMemberQuery] = useState('');
   const [confirmDeleteFolder, setConfirmDeleteFolder] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -78,31 +86,77 @@ export default function ManagedFolderDetailScreen() {
     setLinkSheet(false);
     setEditing(null);
     setLinkForm({ linkUrl: '', title: '', description: '' });
+    setLinkMeta(null);
+    setMetaState('idle');
+    setUrlError(undefined);
   };
 
   const openCreateLink = () => {
     setEditing(null);
     setLinkForm({ linkUrl: '', title: '', description: '' });
+    setLinkMeta(null);
+    setMetaState('idle');
+    setUrlError(undefined);
     setLinkSheet(true);
   };
 
   const openEditLink = (link: ManagedFolderLink) => {
     setEditing(link);
     setLinkForm({ linkUrl: link.linkUrl || '', title: link.title || '', description: link.description || '' });
+    setLinkMeta(link.imageUrl || link.siteName ? { imageUrl: link.imageUrl, siteName: link.siteName, title: link.title, description: link.description, linkUrl: link.linkUrl } : null);
+    setMetaState(link.imageUrl || link.siteName ? 'done' : 'idle');
+    setUrlError(undefined);
     setLinkSheet(true);
   };
 
+  const fetchMeta = useCallback(async (rawUrl: string) => {
+    const normalized = normalizeUrl(rawUrl);
+    if (!normalized) {
+      setUrlError('Enter a valid link, for example https://example.com');
+      setMetaState('error');
+      return;
+    }
+    setUrlError(undefined);
+    setMetaState('fetching');
+    try {
+      const result = await withTimeout(linkMetaMutation.mutateAsync(normalized), 10_000);
+      setLinkMeta(result ?? null);
+      setLinkForm((prev) => ({
+        ...prev,
+        linkUrl: normalized,
+        title: prev.title || result?.title || '',
+        description: prev.description || result?.description || '',
+      }));
+      setMetaState('done');
+    } catch {
+      setLinkMeta(null);
+      setMetaState('error');
+    }
+  }, [linkMetaMutation]);
+
   const saveLink = async () => {
-    if (!linkForm.linkUrl.trim() || !linkForm.title.trim()) {
-      showToast({ message: 'URL and title are required', tone: 'danger' });
+    const normalized = normalizeUrl(linkForm.linkUrl);
+    if (!normalized) {
+      setUrlError('Enter a valid link, for example https://example.com');
+      return;
+    }
+    if (!linkForm.title.trim()) {
+      showToast({ message: 'Add a title before saving', tone: 'danger' });
       return;
     }
     try {
+      const body = {
+        linkUrl: normalized,
+        title: linkForm.title.trim(),
+        description: linkForm.description.trim(),
+        imageUrl: linkMeta?.imageUrl,
+        siteName: linkMeta?.siteName,
+      };
       if (editing) {
-        await updateLink.mutateAsync({ linkId: editing.id, body: { ...linkForm } });
+        await updateLink.mutateAsync({ linkId: editing.id, body });
         showToast({ message: 'Link updated', tone: 'success' });
       } else {
-        await createLink.mutateAsync({ ...linkForm });
+        await createLink.mutateAsync(body);
         showToast({ message: 'Link added', tone: 'success' });
       }
       closeLinkSheet();
@@ -184,7 +238,7 @@ export default function ManagedFolderDetailScreen() {
     return <View style={[styles.page, { backgroundColor: colors.bg }]}><ErrorState title="Folder not found" description={(folderQ.error as Error)?.message || 'This managed folder may have been removed.'} onRetry={() => folderQ.refetch()} /></View>;
   }
 
-  const memberIsSelf = memberTarget && String(memberTarget.userId) === String(user?.id);
+  const memberIsSelf = !!memberTarget && String(memberTarget.userId) === String(user?.id);
   const memberLastAdmin = memberTarget?.role === 'admin' && adminCount <= 1;
 
   return (
@@ -284,10 +338,66 @@ export default function ManagedFolderDetailScreen() {
       )}
 
       <Sheet visible={linkSheet} onClose={closeLinkSheet} title={editing ? 'Edit link' : 'Add link'}>
-        <Field label="URL" required><SearchBarLikeInput value={linkForm.linkUrl} onChangeText={(v) => setLinkForm((p) => ({ ...p, linkUrl: v }))} placeholder="https://..." /></Field>
-        <Field label="Title" required><SearchBarLikeInput value={linkForm.title} onChangeText={(v) => setLinkForm((p) => ({ ...p, title: v }))} placeholder="Link title" /></Field>
-        <Field label="Description"><SearchBarLikeInput value={linkForm.description} onChangeText={(v) => setLinkForm((p) => ({ ...p, description: v }))} placeholder="Optional description" multiline /></Field>
-        <Button label={editing ? 'Save changes' : 'Add link'} onPress={() => void saveLink()} loading={createLink.isPending || updateLink.isPending} />
+        <Field label="Link URL" required error={urlError} helper="Paste a link, then fetch details.">
+          <Input
+            value={linkForm.linkUrl}
+            onChangeText={(v) => { setLinkForm((p) => ({ ...p, linkUrl: v })); if (urlError) setUrlError(undefined); }}
+            placeholder="https://example.com"
+            keyboardType="url"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="go"
+            onSubmitEditing={() => void fetchMeta(linkForm.linkUrl)}
+          />
+        </Field>
+
+        <View style={styles.metaAction}>
+          {metaState === 'fetching' ? (
+            <View style={styles.fetching}>
+              <Spinner />
+              <Text variant="bodySm" tone="textSecondary">Fetching details…</Text>
+            </View>
+          ) : (
+            <Button
+              label={metaState === 'done' ? 'Refresh details' : 'Fetch details'}
+              variant="secondary"
+              size="sm"
+              fullWidth={false}
+              onPress={() => void fetchMeta(linkForm.linkUrl)}
+              leftIcon={<MaterialIcons name="auto-awesome" size={18} color={colors.text} />}
+            />
+          )}
+        </View>
+
+        {metaState === 'error' ? (
+          <View style={[styles.notice, { backgroundColor: colors.warningMuted }]}>
+            <MaterialIcons name="info-outline" size={18} color={colors.warning} />
+            <Text variant="bodySm" color={colors.warning} style={styles.noticeText}>Could not fetch details automatically. You can fill them in below.</Text>
+          </View>
+        ) : null}
+
+        {linkMeta && (linkMeta.imageUrl || linkMeta.siteName) ? (
+          <View style={[styles.preview, { backgroundColor: colors.surfaceSunken, borderColor: colors.border }]}>
+            {linkMeta.imageUrl ? <Image source={{ uri: linkMeta.imageUrl }} style={styles.previewImage} contentFit="cover" transition={160} accessible={false} /> : null}
+            <View style={styles.previewBody}>
+              {linkMeta.siteName ? <Text variant="overline" tone="accent" numberOfLines={1}>{linkMeta.siteName}</Text> : null}
+              <Text variant="bodySm" tone="textSecondary" numberOfLines={2}>{linkMeta.title || linkMeta.description || 'Details fetched'}</Text>
+            </View>
+          </View>
+        ) : null}
+
+        <Field label="Title" required>
+          <Input value={linkForm.title} onChangeText={(v) => setLinkForm((p) => ({ ...p, title: v }))} placeholder="What is this link about?" />
+        </Field>
+        <Field label="Description" helper="Optional — add a note for your team.">
+          <Input value={linkForm.description} onChangeText={(v) => setLinkForm((p) => ({ ...p, description: v }))} placeholder="Add a short description" multiline />
+        </Field>
+        <Button
+          label={editing ? 'Save changes' : 'Save link'}
+          onPress={() => void saveLink()}
+          loading={createLink.isPending || updateLink.isPending}
+          leftIcon={<MaterialIcons name="bookmark" size={20} color={colors.onAccent} />}
+        />
       </Sheet>
 
       <Sheet visible={!!memberTarget} onClose={() => setMemberTarget(null)} title={memberTarget?.username || 'Member'}>
@@ -308,49 +418,27 @@ export default function ManagedFolderDetailScreen() {
   );
 }
 
-function SearchBarLikeInput({ value, onChangeText, placeholder, multiline }: { value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <View style={[inputStyles.wrap, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-      <TextInputLike value={value} onChangeText={onChangeText} placeholder={placeholder} multiline={multiline} />
-    </View>
-  );
-}
 
-function TextInputLike({ value, onChangeText, placeholder, multiline }: { value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean }) {
-  const { colors } = useTheme();
-  const { TextInput } = require('react-native');
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor={colors.textTertiary}
-      multiline={multiline}
-      style={[inputStyles.input, { color: colors.text, minHeight: multiline ? 88 : 48 }]}
-      autoCapitalize="none"
-      autoCorrect={false}
-    />
-  );
-}
-
-const inputStyles = StyleSheet.create({
-  wrap: { borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 12 },
-  input: { fontSize: 16, paddingVertical: 12, textAlignVertical: 'top' },
-});
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
   center: { flex: 1, paddingVertical: 32, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['2'] },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: spacing[3], paddingBottom: spacing[2] },
   headerMain: { flex: 1 },
-  description: { paddingHorizontal: spacing['4'], marginBottom: spacing['2'] },
-  segmentWrap: { paddingHorizontal: spacing['4'], marginBottom: spacing['2'] },
-  content: { padding: spacing['4'], gap: spacing['3'], paddingBottom: 40 },
-  card: { padding: spacing['4'] },
+  description: { paddingHorizontal: 20, marginBottom: spacing[2] },
+  segmentWrap: { paddingHorizontal: 20, marginBottom: spacing[2] },
+  content: { padding: 20, gap: 12, paddingBottom: 40 },
+  card: { padding: 16, borderColor: undefined },
   meta: { marginTop: 6 },
-  rowActions: { flexDirection: 'row', gap: spacing['2'], marginTop: spacing['3'] },
-  searchResults: { gap: spacing['2'], marginTop: spacing['3'] },
-  searchRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderRadius: radius.sm, gap: 12 },
-  memberRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, borderRadius: radius.md, gap: 12 },
+  rowActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  searchResults: { gap: 8, marginTop: 12 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderRadius: radius.sm, gap: 12, minHeight: 52 },
+  memberRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, borderRadius: radius.md, gap: 12, minHeight: 64 },
+  metaAction: { marginTop: -6, marginBottom: spacing[4], flexDirection: 'row' },
+  fetching: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  notice: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: radius.sm, marginBottom: spacing[4] },
+  noticeText: { flex: 1 },
+  preview: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: radius.sm, borderWidth: 1, marginBottom: spacing[4] },
+  previewImage: { width: 64, height: 64, borderRadius: radius.xs },
+  previewBody: { flex: 1, gap: 4, justifyContent: 'center' },
 });
